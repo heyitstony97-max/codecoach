@@ -1,0 +1,28 @@
+{
+  "item_id": "it_code_digits_01",
+  "ok": false,
+  "passed": 1,
+  "total": 2,
+  "timed_out": false,
+  "compile_error": null,
+  "results": [
+    {
+      "name": "small",
+      "passed": true,
+      "visible": true,
+      "detail": "",
+      "stdout": "6\n",
+      "expected": "6\n",
+      "time_ms": 4
+    },
+    {
+      "name": "zero",
+      "passed": false,
+      "visible": true,
+      "detail": "Output differs from expected",
+      "stdout": "",
+      "expected": "0\n",
+      "time_ms": 3
+    }
+  ]
+}

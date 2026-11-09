@@ -1,0 +1,32 @@
+{
+ "courses": [
+  {
+   "id": "history",
+   "title": "The First Transcontinental Railroad",
+   "mode": "strict",
+   "mode_reason": "",
+   "subject": "History",
+   "created_at": "2026-11-05T04:42:11.499918Z",
+   "objectives": 69,
+   "covered": 69,
+   "not_covered": 0,
+   "items_active": 61,
+   "mastery": 0.2,
+   "due_reviews": 0
+  },
+  {
+   "id": "c-basics",
+   "title": "C Basics",
+   "mode": "open",
+   "mode_reason": "no source materials attached",
+   "subject": "Programming",
+   "created_at": "2026-11-05T05:10:00.000000Z",
+   "objectives": 30,
+   "covered": 30,
+   "not_covered": 0,
+   "items_active": 45,
+   "mastery": 0.1,
+   "due_reviews": 0
+  }
+ ]
+}

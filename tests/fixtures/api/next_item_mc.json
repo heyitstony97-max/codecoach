@@ -1,0 +1,24 @@
+{
+  "kind": "item",
+  "reason": "new",
+  "lesson": null,
+  "item": {
+    "id": "it_mc_stamp_01",
+    "objective_id": "us-revolution:o05",
+    "format": "mc",
+    "prompt": "According to the reading, what did the Stamp Act of 1765 require?",
+    "payload": {
+      "options": [
+        "That printed materials carry a tax stamp",
+        "That colonists house British soldiers",
+        "That tea be bought only from the East India Company",
+        "That colonial ports close to trade"
+      ]
+    },
+    "origin": "materials",
+    "source_label": "From your materials",
+    "status": "active",
+    "hints_available": 3
+  },
+  "message": null
+}

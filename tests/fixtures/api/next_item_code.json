@@ -1,0 +1,35 @@
+{
+  "kind": "item",
+  "reason": "review",
+  "lesson": null,
+  "item": {
+    "id": "it_code_digits_01",
+    "objective_id": "c-pointers:o03",
+    "format": "code",
+    "prompt": "Read one non-negative integer from standard input and print the sum of its decimal digits.",
+    "payload": {
+      "language": "c",
+      "starter": "#include <stdio.h>\n\nint main(void) {\n    int n;\n    if (scanf(\"%d\", &n) != 1) return 1;\n    /* your code here */\n    return 0;\n}\n",
+      "visible_tests": [
+        {
+          "name": "small",
+          "stdin": "123\n",
+          "expected_stdout": "6\n"
+        },
+        {
+          "name": "zero",
+          "stdin": "0\n",
+          "expected_stdout": "0\n"
+        }
+      ],
+      "hidden_test_count": 3,
+      "time_limit_s": 5.0,
+      "mem_mb": 128
+    },
+    "origin": "model_knowledge",
+    "source_label": "Not from your materials",
+    "status": "active",
+    "hints_available": 3
+  },
+  "message": null
+}

@@ -1,0 +1,8 @@
+{
+  "name": "codecoach",
+  "label": "CodeCoach",
+  "description": "Learn to code by building a real program, one checked step at a time.",
+  "icon": "BookOpen",
+  "version": "1.0.0",
+  "api": "plugin_api.py"
+}

@@ -1,0 +1,32 @@
+{
+  "courses": [
+    {
+      "id": "us-revolution",
+      "title": "The American Revolution (NPS readings)",
+      "mode": "strict",
+      "mode_reason": "Imported materials: only facts found in them are used.",
+      "created_at": "2026-11-04T18:02:11.000000Z",
+      "objectives": 40,
+      "covered": 37,
+      "not_covered": 3,
+      "items_active": 147,
+      "mastery": 0.485,
+      "due_reviews": 37,
+      "subject": "History"
+    },
+    {
+      "id": "c-pointers",
+      "title": "C: pointers and memory",
+      "mode": "open",
+      "mode_reason": "You chose open mode; items without a source are labeled.",
+      "created_at": "2026-11-02T01:30:00.000000Z",
+      "objectives": 12,
+      "covered": 12,
+      "not_covered": 0,
+      "items_active": 36,
+      "mastery": 0.41,
+      "due_reviews": 5,
+      "subject": "Programming"
+    }
+  ]
+}

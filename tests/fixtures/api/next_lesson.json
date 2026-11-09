@@ -1,0 +1,26 @@
+{
+  "kind": "lesson",
+  "reason": "new",
+  "lesson": {
+    "objective_id": "us-revolution:o05",
+    "unit_title": "Roots of the Conflict",
+    "lesson_title": "The Stamp Act",
+    "statement": "State what the Stamp Act taxed.",
+    "framing": "Read this passage, then answer a few questions about it.",
+    "passages": [
+      {
+        "passage_id": "rev-ch2:p14:3",
+        "location": "Ch. 2, p. 14, para 3",
+        "text": "The Stamp Act of 1765 was the first direct tax Parliament placed on the American colonies; it required that printed materials carry a tax stamp."
+      },
+      {
+        "passage_id": "rev-ch2:p14:4",
+        "location": "Ch. 2, p. 14, para 4",
+        "text": "Colonists objected that they had no elected representatives in Parliament, and several colonial assemblies passed resolutions against the tax."
+      }
+    ],
+    "source_label": "From your materials"
+  },
+  "item": null,
+  "message": null
+}

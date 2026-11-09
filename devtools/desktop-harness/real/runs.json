@@ -1,0 +1,98 @@
+[
+ {
+  "label": "compile error",
+  "code": "#include <stdio.h>\n\nint main(void) {\n    int n;\n    int sum = ;\n    return 0;\n}\n",
+  "result": {
+   "item_id": "real-c-digit-sum",
+   "ok": false,
+   "passed": 0,
+   "total": 2,
+   "results": [
+    {
+     "name": "small",
+     "passed": false,
+     "visible": true,
+     "detail": "Compile error",
+     "stdout": null,
+     "expected": null,
+     "time_ms": null
+    },
+    {
+     "name": "zero",
+     "passed": false,
+     "visible": true,
+     "detail": "Compile error",
+     "stdout": null,
+     "expected": null,
+     "time_ms": null
+    }
+   ],
+   "compile_error": "solution.c: In function ‘main’:\nsolution.c:5:15: error: expected expression before ‘;’ token\n    5 |     int sum = ;\n      |               ^\nsolution.c:5:9: warning: unused variable ‘sum’ [-Wunused-variable]\n    5 |     int sum = ;\n      |         ^~~\nsolution.c:4:9: warning: unused variable ‘n’ [-Wunused-variable]\n    4 |     int n;\n      |         ^",
+   "timed_out": false
+  }
+ },
+ {
+  "label": "partly passing",
+  "code": "#include <stdio.h>\n\nint main(void) {\n    int n;\n    if (scanf(\"%d\", &n) != 1) return 1;\n    int sum = n % 10 + n / 10;\n    printf(\"%d\\n\", sum);\n    return 0;\n}\n",
+  "result": {
+   "item_id": "real-c-digit-sum",
+   "ok": false,
+   "passed": 1,
+   "total": 2,
+   "results": [
+    {
+     "name": "small",
+     "passed": false,
+     "visible": true,
+     "detail": "Output differs",
+     "stdout": "15\n",
+     "expected": "6\n",
+     "time_ms": 10
+    },
+    {
+     "name": "zero",
+     "passed": true,
+     "visible": true,
+     "detail": "",
+     "stdout": "0\n",
+     "expected": "0\n",
+     "time_ms": 10
+    }
+   ],
+   "compile_error": null,
+   "timed_out": false
+  }
+ },
+ {
+  "label": "all passing",
+  "code": "#include <stdio.h>\n\nint main(void) {\n    int n;\n    if (scanf(\"%d\", &n) != 1) return 1;\n    int sum = 0;\n    while (n > 0) {\n        sum += n % 10;\n        n /= 10;\n    }\n    printf(\"%d\\n\", sum);\n    return 0;\n}\n",
+  "result": {
+   "item_id": "real-c-digit-sum",
+   "ok": true,
+   "passed": 2,
+   "total": 2,
+   "results": [
+    {
+     "name": "small",
+     "passed": true,
+     "visible": true,
+     "detail": "",
+     "stdout": "6\n",
+     "expected": "6\n",
+     "time_ms": 10
+    },
+    {
+     "name": "zero",
+     "passed": true,
+     "visible": true,
+     "detail": "",
+     "stdout": "0\n",
+     "expected": "0\n",
+     "time_ms": 8
+    }
+   ],
+   "compile_error": null,
+   "timed_out": false
+  }
+ }
+]

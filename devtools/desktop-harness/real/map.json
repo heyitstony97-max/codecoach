@@ -1,0 +1,1696 @@
+{
+ "course": {
+  "id": "history",
+  "title": "The First Transcontinental Railroad",
+  "mode": "strict",
+  "mode_reason": "",
+  "created_at": "2026-11-05T04:42:11.499918Z",
+  "objectives": 69,
+  "covered": 69,
+  "not_covered": 0,
+  "items_active": 61,
+  "mastery": 0.2,
+  "due_reviews": 0
+ },
+ "units": [
+  {
+   "id": "history:u01",
+   "title": "Four Special Spikes",
+   "lessons": [
+    {
+     "id": "history:u01:l01",
+     "title": "The Golden Spike",
+     "objectives": [
+      {
+       "id": "history:o01",
+       "unit": "history:u01",
+       "lesson": "history:u01:l01",
+       "verb": "identify",
+       "statement": "Identify the person who commissioned the Golden Spike and his connection to the Central Pacific Railroad.",
+       "kind": "reading",
+       "prereqs": [],
+       "passage_ids": [
+        "history-md:the-golden-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o02",
+       "unit": "history:u01",
+       "lesson": "history:u01:l01",
+       "verb": "identify",
+       "statement": "State the length, weight, and gold carat of the Golden Spike as described in the passage.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o01"
+       ],
+       "passage_ids": [
+        "history-md:the-golden-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o03",
+       "unit": "history:u01",
+       "lesson": "history:u01:l01",
+       "verb": "explain",
+       "statement": "Explain why David Hewes chose to fund and have the Golden Spike cast using his own gold rather than a solid gold or silver section of rail.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o02"
+       ],
+       "passage_ids": [
+        "history-md:the-golden-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o04",
+       "unit": "history:u01",
+       "lesson": "history:u01:l01",
+       "verb": "identify",
+       "statement": "Identify how much of the total $400 in gold was used in the actual spike and where the remaining excess material was left.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o03"
+       ],
+       "passage_ids": [
+        "history-md:the-golden-spike:1",
+        "history-md:the-golden-spike:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o05",
+       "unit": "history:u01",
+       "lesson": "history:u01:l01",
+       "verb": "identify",
+       "statement": "List what was engraved on each of the four sides and the top of the Golden Spike.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o04"
+       ],
+       "passage_ids": [
+        "history-md:the-golden-spike:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o06",
+       "unit": "history:u01",
+       "lesson": "history:u01:l01",
+       "verb": "trace",
+       "statement": "Trace the sequence of steps in producing the Golden Spike, from the William T. Garratt Foundry casting through the engraving of all four sides and the top.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o05"
+       ],
+       "passage_ids": [
+        "history-md:the-golden-spike:1",
+        "history-md:the-golden-spike:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    },
+    {
+     "id": "history:u01:l02",
+     "title": "Nevada's Silver Spike",
+     "objectives": [
+      {
+       "id": "history:o07",
+       "unit": "history:u01",
+       "lesson": "history:u01:l02",
+       "verb": "compare",
+       "statement": "Nevada's silver spike was forged rather than cast, unlike the Golden Spike.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o06"
+       ],
+       "passage_ids": [
+        "history-md:nevada-s-silver-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o08",
+       "unit": "history:u01",
+       "lesson": "history:u01:l02",
+       "verb": "identify",
+       "statement": "F.A. Tritle, Railroad Commissioner and candidate for Governor of Nevada, ordered the silver spike on May 5, 1869.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o07"
+       ],
+       "passage_ids": [
+        "history-md:nevada-s-silver-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o09",
+       "unit": "history:u01",
+       "lesson": "history:u01:l02",
+       "verb": "identify",
+       "statement": "Virginia City assayers E. Ruhling & Co. provided 25 ounces of silver, and Robert Lodge of Dowling Blacksmith Shop forged it into a rough, unpolished 6-inch, 10 1/2-ounce spike.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o08"
+       ],
+       "passage_ids": [
+        "history-md:nevada-s-silver-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o10",
+       "unit": "history:u01",
+       "lesson": "history:u01:l02",
+       "verb": "trace",
+       "statement": "The finished spike was rushed twenty miles to Reno and given to Stanford aboard his special train heading to Promontory Summit.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o09"
+       ],
+       "passage_ids": [
+        "history-md:nevada-s-silver-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o11",
+       "unit": "history:u01",
+       "lesson": "history:u01:l02",
+       "verb": "identify",
+       "statement": "The ceremony at Promontory Summit marked the completion of the transcontinental railroad.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o10"
+       ],
+       "passage_ids": [
+        "history-md:nevada-s-silver-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    },
+    {
+     "id": "history:u01:l03",
+     "title": "Arizona's Gold and Silver Spike",
+     "objectives": [
+      {
+       "id": "history:o12",
+       "unit": "history:u01",
+       "lesson": "history:u01:l03",
+       "verb": "identify",
+       "statement": "The Arizona Territory's spike was a 6 inch iron spike with a gold plated head and silver plated shaft.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o11"
+       ],
+       "passage_ids": [
+        "history-md:arizona-s-gold-and-silver-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o13",
+       "unit": "history:u01",
+       "lesson": "history:u01:l03",
+       "verb": "identify",
+       "statement": "Governor Anson P.K. Safford had the Arizona spike made, though when and by whom it was made is unknown.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o12"
+       ],
+       "passage_ids": [
+        "history-md:arizona-s-gold-and-silver-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o14",
+       "unit": "history:u01",
+       "lesson": "history:u01:l03",
+       "verb": "identify",
+       "statement": "The Arizona spike was engraved with the words 'Ribbed with Iron Clad in Silver and Crowned with Gold,' 'Arizona presents her offering,' 'to the enterprise that has banded a continent,' and 'and dictated a Pathway to Commerce.'",
+       "kind": "reading",
+       "prereqs": [
+        "history:o13"
+       ],
+       "passage_ids": [
+        "history-md:arizona-s-gold-and-silver-spike:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o15",
+       "unit": "history:u01",
+       "lesson": "history:u01:l03",
+       "verb": "identify",
+       "statement": "The head of the Arizona spike read 'Presented by Gov. Safford.'",
+       "kind": "reading",
+       "prereqs": [
+        "history:o14"
+       ],
+       "passage_ids": [
+        "history-md:arizona-s-gold-and-silver-spike:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    },
+    {
+     "id": "history:u01:l04",
+     "title": "A Second Golden Spike",
+     "objectives": [
+      {
+       "id": "history:o16",
+       "unit": "history:u01",
+       "lesson": "history:u01:l04",
+       "verb": "identify",
+       "statement": "Frederick Marriott, proprietor of the San Francisco News Letter newspaper company, ordered the second golden spike.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o15"
+       ],
+       "passage_ids": [
+        "history-md:a-second-golden-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o17",
+       "unit": "history:u01",
+       "lesson": "history:u01:l04",
+       "verb": "identify",
+       "statement": "The second golden spike was 5 inches long, weighed 9 1/2 ounces, and was made from about $200 worth of gold.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o16"
+       ],
+       "passage_ids": [
+        "history-md:a-second-golden-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o18",
+       "unit": "history:u01",
+       "lesson": "history:u01:l04",
+       "verb": "identify",
+       "statement": "The second golden spike was inscribed with the message that the San Francisco News Letter offers its homage to the great work which has joined the Atlantic and Pacific Oceans, dated May, 1869.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o17"
+       ],
+       "passage_ids": [
+        "history-md:a-second-golden-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o19",
+       "unit": "history:u01",
+       "lesson": "history:u01:l04",
+       "verb": "explain",
+       "statement": "The second golden spike was intended to offer homage to the completion of the railroad that joined the Atlantic and Pacific Oceans.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o18"
+       ],
+       "passage_ids": [
+        "history-md:a-second-golden-spike:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    },
+    {
+     "id": "history:u01:l05",
+     "title": "A Special Hammer",
+     "objectives": [
+      {
+       "id": "history:o20",
+       "unit": "history:u01",
+       "lesson": "history:u01:l05",
+       "verb": "identify",
+       "statement": "L.W. Coe, president of San Francisco's Pacific Express Company, commissioned the special spike hammer (maul) for the Golden Spike Ceremony.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o19"
+       ],
+       "passage_ids": [
+        "history-md:a-special-hammer:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o21",
+       "unit": "history:u01",
+       "lesson": "history:u01:l05",
+       "verb": "identify",
+       "statement": "The tool maker Conroy & O'Connor manufactured the special spike hammer (maul) used at the Golden Spike Ceremony.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o20"
+       ],
+       "passage_ids": [
+        "history-md:a-special-hammer:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 0,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o22",
+       "unit": "history:u01",
+       "lesson": "history:u01:l05",
+       "verb": "define",
+       "statement": "A maul, in the context of the Golden Spike Ceremony, is a special spike hammer.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o21"
+       ],
+       "passage_ids": [
+        "history-md:a-special-hammer:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o23",
+       "unit": "history:u01",
+       "lesson": "history:u01:l05",
+       "verb": "trace",
+       "statement": "After manufacture, the maul was taken to Vanderslice & Co. of San Francisco, where it was heavily plated with silver and stamped with the manufacturer's name.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o22"
+       ],
+       "passage_ids": [
+        "history-md:a-special-hammer:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    },
+    {
+     "id": "history:u01:l06",
+     "title": "The Laurelwood Tie",
+     "objectives": [
+      {
+       "id": "history:o24",
+       "unit": "history:u01",
+       "lesson": "history:u01:l06",
+       "verb": "identify",
+       "statement": "West Evans, tie contractor for the Central Pacific, had the laurelwood tie prepared.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o23"
+       ],
+       "passage_ids": [
+        "history-md:the-laurelwood-tie:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o25",
+       "unit": "history:u01",
+       "lesson": "history:u01:l06",
+       "verb": "identify",
+       "statement": "Strahle & Hughes, a San Francisco billiard table manufacturer, prepared the highly polished tie made from California Laurelwood.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o24"
+       ],
+       "passage_ids": [
+        "history-md:the-laurelwood-tie:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o26",
+       "unit": "history:u01",
+       "lesson": "history:u01:l06",
+       "verb": "identify",
+       "statement": "The laurelwood tie measured 7 1/2 feet long and 8 by 6 inches, and bore a centered silver plaque reading 'The last tie laid on completion of the Pacific Railroad, May, 1869.'",
+       "kind": "reading",
+       "prereqs": [
+        "history:o25"
+       ],
+       "passage_ids": [
+        "history-md:the-laurelwood-tie:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o27",
+       "unit": "history:u01",
+       "lesson": "history:u01:l06",
+       "verb": "identify",
+       "statement": "The plaque on the tie listed the officers and directors of the Central Pacific along with the names of the tie maker and donor.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o26"
+       ],
+       "passage_ids": [
+        "history-md:the-laurelwood-tie:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o28",
+       "unit": "history:u01",
+       "lesson": "history:u01:l06",
+       "verb": "explain",
+       "statement": "Four holes were drilled into the tie in order to accommodate the ceremonial spikes.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o27"
+       ],
+       "passage_ids": [
+        "history-md:the-laurelwood-tie:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    },
+    {
+     "id": "history:u01:l07",
+     "title": "The Ceremony",
+     "objectives": [
+      {
+       "id": "history:o29",
+       "unit": "history:u01",
+       "lesson": "history:u01:l07",
+       "verb": "order",
+       "statement": "Arrange the major events of the Golden Spike Ceremony in sequence, beginning with the placement of the laurel wood tie and ending with the telegrapher sending the message \"D-O-N-E.\"",
+       "kind": "reading",
+       "prereqs": [
+        "history:o28"
+       ],
+       "passage_ids": [
+        "history-md:the-ceremony:1",
+        "history-md:the-ceremony:2",
+        "history-md:the-ceremony:3",
+        "history-md:the-ceremony:4"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o30",
+       "unit": "history:u01",
+       "lesson": "history:u01:l07",
+       "verb": "identify",
+       "statement": "Identify that Edgar Mills emceed the ceremony and Reverend Dr. John Todd of Pittsfield, Massachusetts offered the invocation.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o29"
+       ],
+       "passage_ids": [
+        "history-md:the-ceremony:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 0,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o31",
+       "unit": "history:u01",
+       "lesson": "history:u01:l07",
+       "verb": "identify",
+       "statement": "Identify that Dr. H.W. Harkness, a Sacramento newspaper publisher and editor, presented the two golden spikes to Leland Stanford.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o30"
+       ],
+       "passage_ids": [
+        "history-md:the-ceremony:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o32",
+       "unit": "history:u01",
+       "lesson": "history:u01:l07",
+       "verb": "explain",
+       "statement": "Explain why General Grenville Dodge spoke in place of Thomas Durant, citing Durant's severe headache most likely caused by a hangover from the previous night's party in Ogden.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o31"
+       ],
+       "passage_ids": [
+        "history-md:the-ceremony:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 0,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o33",
+       "unit": "history:u01",
+       "lesson": "history:u01:l07",
+       "verb": "trace",
+       "statement": "Trace the process by which the precious metal spikes and laurel wood tie were removed, a pine tie was installed, three ordinary iron spikes were driven, and a fourth iron spike with a regular hammer were wired to the transcontinental telegraph line.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o32"
+       ],
+       "passage_ids": [
+        "history-md:the-ceremony:3"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o34",
+       "unit": "history:u01",
+       "lesson": "history:u01:l07",
+       "verb": "identify",
+       "statement": "Identify that a regular rail worker, not Stanford or Durant, drove home the last spike.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o33"
+       ],
+       "passage_ids": [
+        "history-md:the-ceremony:4"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o35",
+       "unit": "history:u01",
+       "lesson": "history:u01:l07",
+       "verb": "identify",
+       "statement": "Identify that telegrapher W.N. Shilling of Western Union sent the message \"D-O-N-E\" at 12:47 p.m. on Monday, May 10, 1869.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o34"
+       ],
+       "passage_ids": [
+        "history-md:the-ceremony:4"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    },
+    {
+     "id": "history:u01:l08",
+     "title": "A Scattering of History",
+     "objectives": [
+      {
+       "id": "history:o36",
+       "unit": "history:u01",
+       "lesson": "history:u01:l08",
+       "verb": "identify",
+       "statement": "Identify the institution and city where David Hewes donated the Golden Spike in 1892.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o35"
+       ],
+       "passage_ids": [
+        "history-md:a-scattering-of-history:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o37",
+       "unit": "history:u01",
+       "lesson": "history:u01:l08",
+       "verb": "identify",
+       "statement": "Identify the inscription engraved on Nevada's silver spike by Nye and Co.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o36"
+       ],
+       "passage_ids": [
+        "history-md:a-scattering-of-history:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 0,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o38",
+       "unit": "history:u01",
+       "lesson": "history:u01:l08",
+       "verb": "order",
+       "statement": "Order the sequence of events for Nevada's silver spike: returned to Nye and Co., polished and engraved, delivered to Stanford, and placed in the Stanford University museum.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o37"
+       ],
+       "passage_ids": [
+        "history-md:a-scattering-of-history:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 0,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o39",
+       "unit": "history:u01",
+       "lesson": "history:u01:l08",
+       "verb": "identify",
+       "statement": "Identify the auction house, the year, and the selling price of the Arizona Gold and Silver Spike in January 2023.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o38"
+       ],
+       "passage_ids": [
+        "history-md:a-scattering-of-history:3"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o40",
+       "unit": "history:u01",
+       "lesson": "history:u01:l08",
+       "verb": "explain",
+       "statement": "Explain why the whereabouts of the second gold spike remain unknown, including the two speculations offered in the text.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o39"
+       ],
+       "passage_ids": [
+        "history-md:a-scattering-of-history:4"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o41",
+       "unit": "history:u01",
+       "lesson": "history:u01:l08",
+       "verb": "trace",
+       "statement": "Trace the path of the laurelwood tie from its display in Sacramento through its move to the Flood Building in San Francisco to its destruction in 1906.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o40"
+       ],
+       "passage_ids": [
+        "history-md:a-scattering-of-history:5"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o42",
+       "unit": "history:u01",
+       "lesson": "history:u01:l08",
+       "verb": "identify",
+       "statement": "Identify the four recipients of the rings made from the Golden Spike's large sprue.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o41"
+       ],
+       "passage_ids": [
+        "history-md:a-scattering-of-history:6"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o43",
+       "unit": "history:u01",
+       "lesson": "history:u01:l08",
+       "verb": "compute",
+       "statement": "Compute the total number of small items (rings and watch fobs) David Hewes created from the Golden Spike's sprue.",
+       "kind": "math",
+       "prereqs": [
+        "history:o42"
+       ],
+       "passage_ids": [
+        "history-md:a-scattering-of-history:6"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 0,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "history:u02",
+   "title": "The Archeology of Chinese Laborers Who Connected the Country",
+   "lessons": [
+    {
+     "id": "history:u02:l01",
+     "title": "The Archeology of Chinese Laborers Who Connected the Country",
+     "objectives": [
+      {
+       "id": "history:o44",
+       "unit": "history:u02",
+       "lesson": "history:u02:l01",
+       "verb": "identify",
+       "statement": "The learner can identify that over 12,000 Chinese immigrant laborers contributed to the construction of the first transcontinental railroad.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o43"
+       ],
+       "passage_ids": [
+        "history-md:the-archeology-of-chinese-laborers-who-connected-the-country:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o45",
+       "unit": "history:u02",
+       "lesson": "history:u02:l01",
+       "verb": "identify",
+       "statement": "The learner can identify that Golden Spike National Historical Park is located in the arid region between the Sierra Nevada and Rocky Mountains.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o44"
+       ],
+       "passage_ids": [
+        "history-md:the-archeology-of-chinese-laborers-who-connected-the-country:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o46",
+       "unit": "history:u02",
+       "lesson": "history:u02:l01",
+       "verb": "explain",
+       "statement": "The learner can explain that primary sources from Chinese railroad workers are scarce because no personal writings, letters, or diaries authored by them have been found.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o45"
+       ],
+       "passage_ids": [
+        "history-md:the-archeology-of-chinese-laborers-who-connected-the-country:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o47",
+       "unit": "history:u02",
+       "lesson": "history:u02:l01",
+       "verb": "identify",
+       "statement": "The learner can identify that the available eyewitness accounts and visual images of Chinese railroad workers come from European American and European observers and often reflect anti-Chinese sentiment.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o46"
+       ],
+       "passage_ids": [
+        "history-md:the-archeology-of-chinese-laborers-who-connected-the-country:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o48",
+       "unit": "history:u02",
+       "lesson": "history:u02:l01",
+       "verb": "explain",
+       "statement": "The learner can explain that the legacy of Chinese railroad workers is preserved through archaeological analyses of artifacts and features they left behind, and through stories passed down through generations of their descendants.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o47"
+       ],
+       "passage_ids": [
+        "history-md:the-archeology-of-chinese-laborers-who-connected-the-country:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    },
+    {
+     "id": "history:u02:l02",
+     "title": "A Dream Slowly Becomes a Reality",
+     "objectives": [
+      {
+       "id": "history:o49",
+       "unit": "history:u02",
+       "lesson": "history:u02:l02",
+       "verb": "identify",
+       "statement": "The Railway Act of 1862 authorized the Central Pacific Railroad (CPRR) to build the western portion and the Union Pacific Railroad (UPRR) to build the eastern portion of the chosen transcontinental railroad route.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o48"
+       ],
+       "passage_ids": [
+        "history-md:a-dream-slowly-becomes-a-reality:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 0,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o50",
+       "unit": "history:u02",
+       "lesson": "history:u02:l02",
+       "verb": "explain",
+       "statement": "Labor shortages fueled by strikes and an unwillingness to increase wages led Superintendent J.H. Strobridge, at the urging of Charles Crocker, to hire Chinese immigrants for the CPRR, beginning with 50 men and eventually employing approximately 11,000 Chinese workers by 1868.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o49"
+       ],
+       "passage_ids": [
+        "history-md:a-dream-slowly-becomes-a-reality:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o51",
+       "unit": "history:u02",
+       "lesson": "history:u02:l02",
+       "verb": "identify",
+       "statement": "Chinese laborers on the CPRR were paid an average of 30% less than their European or European-American counterparts, and the CPRR organized them into groups of up to 30 men, each with a leader responsible for receiving and distributing wages rather than recording individual names.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o50"
+       ],
+       "passage_ids": [
+        "history-md:a-dream-slowly-becomes-a-reality:3"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o52",
+       "unit": "history:u02",
+       "lesson": "history:u02:l02",
+       "verb": "identify",
+       "statement": "CPRR crews faced dangerous conditions including sub-freezing and sweltering temperatures, blizzards and avalanches, bad water, and blasting accidents, which resulted in an unknown number of deaths estimated at hundreds or even thousands.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o51"
+       ],
+       "passage_ids": [
+        "history-md:a-dream-slowly-becomes-a-reality:4"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o53",
+       "unit": "history:u02",
+       "lesson": "history:u02:l02",
+       "verb": "order",
+       "statement": "Sequence the following events: CPRR crews entered Utah Territory in March 1869; construction camps covered Promontory Summit in April and May 1869; on April 28, 1869, crews laid 10 miles and 56 feet of track in 12 hours; and before noon on May 10, 1869, eight Chinese men moved the final rail and ceremonial golden and silver spikes were driven.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o52"
+       ],
+       "passage_ids": [
+        "history-md:a-dream-slowly-becomes-a-reality:5"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o54",
+       "unit": "history:u02",
+       "lesson": "history:u02:l02",
+       "verb": "identify",
+       "statement": "On April 28, 1869, Chinese construction crews and a smaller group of non-Chinese workers laid 10 miles and 56 feet of track in 12 hours, setting a construction record that has not been surpassed.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o53"
+       ],
+       "passage_ids": [
+        "history-md:a-dream-slowly-becomes-a-reality:5"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    },
+    {
+     "id": "history:u02:l03",
+     "title": "Addressing an Archeological Paradox",
+     "objectives": [
+      {
+       "id": "history:o55",
+       "unit": "history:u02",
+       "lesson": "history:u02:l03",
+       "verb": "identify",
+       "statement": "The archeological paradox is that artifacts and structures are anchored in specific places, while the Chinese laborers who deposited them are represented through materials strewn across thousands of miles.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o54"
+       ],
+       "passage_ids": [
+        "history-md:addressing-an-archeological-paradox:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o56",
+       "unit": "history:u02",
+       "lesson": "history:u02:l03",
+       "verb": "identify",
+       "statement": "About 31 worker campsites and supply camps were found on the slopes of Promontory Summit, and hundreds more were located throughout the North American West, and these remains are the only evidence of the human activity in the final months of railroad construction and completion.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o55"
+       ],
+       "passage_ids": [
+        "history-md:addressing-an-archeological-paradox:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o57",
+       "unit": "history:u02",
+       "lesson": "history:u02:l03",
+       "verb": "define",
+       "statement": "A dugout is a shallow depression that survives today as a trace of the shelter housing Chinese railroad workers built to protect them from the elements.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o56"
+       ],
+       "passage_ids": [
+        "history-md:addressing-an-archeological-paradox:3"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o58",
+       "unit": "history:u02",
+       "lesson": "history:u02:l03",
+       "verb": "identify",
+       "statement": "The range of Chinese dwellings excavated along the railroad—tents, dugouts, and formal houses—demonstrates both the initial construction phase and the much longer period when crews were maintaining the railroads.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o57"
+       ],
+       "passage_ids": [
+        "history-md:addressing-an-archeological-paradox:3"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o59",
+       "unit": "history:u02",
+       "lesson": "history:u02:l03",
+       "verb": "compare",
+       "statement": "The 1880 Census reported 54 Chinese individuals in Terrace but ignored Chinese inhabitants in West Lake and East Lake, whereas field investigations revealed a substantial Chinese community in those latter locations during the 1870s and 1880s.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o58"
+       ],
+       "passage_ids": [
+        "history-md:addressing-an-archeological-paradox:4"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o60",
+       "unit": "history:u02",
+       "lesson": "history:u02:l03",
+       "verb": "compare",
+       "statement": "Imported Chinese porcelain bowls from camps prior to 1870 are decorated in a 'double happiness' and 'bamboo' motif, while those from camps after 1870 include 'wintergreen' and 'four seasons' patterns.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o59"
+       ],
+       "passage_ids": [
+        "history-md:addressing-an-archeological-paradox:5"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o61",
+       "unit": "history:u02",
+       "lesson": "history:u02:l03",
+       "verb": "identify",
+       "statement": "Clothing fasteners found at Chinese railroad camps, such as metal suspender clasps and shell shirt buttons, represent Chinese workers adopting Western-style garments.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o60"
+       ],
+       "passage_ids": [
+        "history-md:addressing-an-archeological-paradox:5"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o62",
+       "unit": "history:u02",
+       "lesson": "history:u02:l03",
+       "verb": "explain",
+       "statement": "Artifacts from even the most remote Chinese railroad worker camps show a uniformity of supplies, provisions, and domestic items, offering personal glimpses into workers' lives that are otherwise forgotten or omitted in mainstream history.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o61"
+       ],
+       "passage_ids": [
+        "history-md:addressing-an-archeological-paradox:5"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    },
+    {
+     "id": "history:u02:l04",
+     "title": "A Collective Contribution",
+     "objectives": [
+      {
+       "id": "history:o63",
+       "unit": "history:u02",
+       "lesson": "history:u02:l04",
+       "verb": "identify",
+       "statement": "The 1882 Chinese Exclusion Act caused railroad jobs to shift to other immigrant communities, and most Chinese workers were replaced on U.S. railroads by 1910.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o62"
+       ],
+       "passage_ids": [
+        "history-md:a-collective-contribution:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 0,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o64",
+       "unit": "history:u02",
+       "lesson": "history:u02:l04",
+       "verb": "identify",
+       "statement": "A few identified Chinese railroad workers listed in the Southern Pacific Bulletin are Ah Hop, Toy Gee, and Charlie Dan.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o63"
+       ],
+       "passage_ids": [
+        "history-md:a-collective-contribution:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o65",
+       "unit": "history:u02",
+       "lesson": "history:u02:l04",
+       "verb": "explain",
+       "statement": "The CPRR's practice of omitting Chinese workers' names makes it difficult to recognize their individual contributions to railroad construction.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o64"
+       ],
+       "passage_ids": [
+        "history-md:a-collective-contribution:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o66",
+       "unit": "history:u02",
+       "lesson": "history:u02:l04",
+       "verb": "explain",
+       "statement": "Chinese railroad workers' savings became the foundations for personal and community-wide growth in settlements such as Terrace, West Lake, and East Lake.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o65"
+       ],
+       "passage_ids": [
+        "history-md:a-collective-contribution:1"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o67",
+       "unit": "history:u02",
+       "lesson": "history:u02:l04",
+       "verb": "order",
+       "statement": "Lee Wong Sang passed through CPRR work camps in the sequence of California, Nevada, and Utah between 1866 and 1869.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o66"
+       ],
+       "passage_ids": [
+        "history-md:a-collective-contribution:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o68",
+       "unit": "history:u02",
+       "lesson": "history:u02:l04",
+       "verb": "define",
+       "statement": "'Silent Spikes' is a label previously applied to Chinese railroad workers that archaeology replaces with rightful commemoration of their specific successes in uplifting communities and linking the country.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o67"
+       ],
+       "passage_ids": [
+        "history-md:a-collective-contribution:3"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      },
+      {
+       "id": "history:o69",
+       "unit": "history:u02",
+       "lesson": "history:u02:l04",
+       "verb": "identify",
+       "statement": "Some identified Chinese workers dedicated nearly 50 years of labor to the CPRR.",
+       "kind": "reading",
+       "prereqs": [
+        "history:o68"
+       ],
+       "passage_ids": [
+        "history-md:a-collective-contribution:2"
+       ],
+       "coverage": "covered",
+       "mastery": 0.2,
+       "items_active": 1,
+       "due_reviews": 0,
+       "status_label": null
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "edges": [
+  {
+   "prereq": "history:o01",
+   "objective": "history:o02"
+  },
+  {
+   "prereq": "history:o02",
+   "objective": "history:o03"
+  },
+  {
+   "prereq": "history:o03",
+   "objective": "history:o04"
+  },
+  {
+   "prereq": "history:o04",
+   "objective": "history:o05"
+  },
+  {
+   "prereq": "history:o05",
+   "objective": "history:o06"
+  },
+  {
+   "prereq": "history:o06",
+   "objective": "history:o07"
+  },
+  {
+   "prereq": "history:o07",
+   "objective": "history:o08"
+  },
+  {
+   "prereq": "history:o08",
+   "objective": "history:o09"
+  },
+  {
+   "prereq": "history:o09",
+   "objective": "history:o10"
+  },
+  {
+   "prereq": "history:o10",
+   "objective": "history:o11"
+  },
+  {
+   "prereq": "history:o11",
+   "objective": "history:o12"
+  },
+  {
+   "prereq": "history:o12",
+   "objective": "history:o13"
+  },
+  {
+   "prereq": "history:o13",
+   "objective": "history:o14"
+  },
+  {
+   "prereq": "history:o14",
+   "objective": "history:o15"
+  },
+  {
+   "prereq": "history:o15",
+   "objective": "history:o16"
+  },
+  {
+   "prereq": "history:o16",
+   "objective": "history:o17"
+  },
+  {
+   "prereq": "history:o17",
+   "objective": "history:o18"
+  },
+  {
+   "prereq": "history:o18",
+   "objective": "history:o19"
+  },
+  {
+   "prereq": "history:o19",
+   "objective": "history:o20"
+  },
+  {
+   "prereq": "history:o20",
+   "objective": "history:o21"
+  },
+  {
+   "prereq": "history:o21",
+   "objective": "history:o22"
+  },
+  {
+   "prereq": "history:o22",
+   "objective": "history:o23"
+  },
+  {
+   "prereq": "history:o23",
+   "objective": "history:o24"
+  },
+  {
+   "prereq": "history:o24",
+   "objective": "history:o25"
+  },
+  {
+   "prereq": "history:o25",
+   "objective": "history:o26"
+  },
+  {
+   "prereq": "history:o26",
+   "objective": "history:o27"
+  },
+  {
+   "prereq": "history:o27",
+   "objective": "history:o28"
+  },
+  {
+   "prereq": "history:o28",
+   "objective": "history:o29"
+  },
+  {
+   "prereq": "history:o29",
+   "objective": "history:o30"
+  },
+  {
+   "prereq": "history:o30",
+   "objective": "history:o31"
+  },
+  {
+   "prereq": "history:o31",
+   "objective": "history:o32"
+  },
+  {
+   "prereq": "history:o32",
+   "objective": "history:o33"
+  },
+  {
+   "prereq": "history:o33",
+   "objective": "history:o34"
+  },
+  {
+   "prereq": "history:o34",
+   "objective": "history:o35"
+  },
+  {
+   "prereq": "history:o35",
+   "objective": "history:o36"
+  },
+  {
+   "prereq": "history:o36",
+   "objective": "history:o37"
+  },
+  {
+   "prereq": "history:o37",
+   "objective": "history:o38"
+  },
+  {
+   "prereq": "history:o38",
+   "objective": "history:o39"
+  },
+  {
+   "prereq": "history:o39",
+   "objective": "history:o40"
+  },
+  {
+   "prereq": "history:o40",
+   "objective": "history:o41"
+  },
+  {
+   "prereq": "history:o41",
+   "objective": "history:o42"
+  },
+  {
+   "prereq": "history:o42",
+   "objective": "history:o43"
+  },
+  {
+   "prereq": "history:o43",
+   "objective": "history:o44"
+  },
+  {
+   "prereq": "history:o44",
+   "objective": "history:o45"
+  },
+  {
+   "prereq": "history:o45",
+   "objective": "history:o46"
+  },
+  {
+   "prereq": "history:o46",
+   "objective": "history:o47"
+  },
+  {
+   "prereq": "history:o47",
+   "objective": "history:o48"
+  },
+  {
+   "prereq": "history:o48",
+   "objective": "history:o49"
+  },
+  {
+   "prereq": "history:o49",
+   "objective": "history:o50"
+  },
+  {
+   "prereq": "history:o50",
+   "objective": "history:o51"
+  },
+  {
+   "prereq": "history:o51",
+   "objective": "history:o52"
+  },
+  {
+   "prereq": "history:o52",
+   "objective": "history:o53"
+  },
+  {
+   "prereq": "history:o53",
+   "objective": "history:o54"
+  },
+  {
+   "prereq": "history:o54",
+   "objective": "history:o55"
+  },
+  {
+   "prereq": "history:o55",
+   "objective": "history:o56"
+  },
+  {
+   "prereq": "history:o56",
+   "objective": "history:o57"
+  },
+  {
+   "prereq": "history:o57",
+   "objective": "history:o58"
+  },
+  {
+   "prereq": "history:o58",
+   "objective": "history:o59"
+  },
+  {
+   "prereq": "history:o59",
+   "objective": "history:o60"
+  },
+  {
+   "prereq": "history:o60",
+   "objective": "history:o61"
+  },
+  {
+   "prereq": "history:o61",
+   "objective": "history:o62"
+  },
+  {
+   "prereq": "history:o62",
+   "objective": "history:o63"
+  },
+  {
+   "prereq": "history:o63",
+   "objective": "history:o64"
+  },
+  {
+   "prereq": "history:o64",
+   "objective": "history:o65"
+  },
+  {
+   "prereq": "history:o65",
+   "objective": "history:o66"
+  },
+  {
+   "prereq": "history:o66",
+   "objective": "history:o67"
+  },
+  {
+   "prereq": "history:o67",
+   "objective": "history:o68"
+  },
+  {
+   "prereq": "history:o68",
+   "objective": "history:o69"
+  }
+ ],
+ "summary": {
+  "objectives": 69,
+  "covered": 69,
+  "not_covered": 0,
+  "mastered": 0,
+  "mean_mastery": 0.2
+ }
+}

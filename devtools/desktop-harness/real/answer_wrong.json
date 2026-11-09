@@ -1,0 +1,20 @@
+{
+ "item_id": "it_6771a1b325b0ce78",
+ "correct": false,
+ "score": 0.0,
+ "feedback": "Not correct.",
+ "correct_answer": "5 5/8 inches long, 14.03 ounces, and 17.6 carat gold",
+ "citations": [
+  {
+   "passage_id": "history-md:the-golden-spike:1",
+   "quote": "The spike was 5 5/8 inches long, weighed 14.03 ounces and was made of 17.6 carat gold.",
+   "location": "The Golden Spike, para 1"
+  }
+ ],
+ "source_label": "From your materials",
+ "next_review": {
+  "due": "2026-11-05T06:36:26.527817Z",
+  "interval_days": 0.007
+ },
+ "mastery": 0.1758
+}

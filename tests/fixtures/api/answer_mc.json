@@ -1,0 +1,20 @@
+{
+  "item_id": "it_mc_stamp_01",
+  "correct": true,
+  "score": 1.0,
+  "feedback": "Correct. The passage says the Act required printed materials to carry a tax stamp.",
+  "correct_answer": "That printed materials carry a tax stamp",
+  "citations": [
+    {
+      "passage_id": "rev-ch2:p14:3",
+      "quote": "it required that printed materials carry a tax stamp",
+      "location": "Ch. 2, p. 14, para 3"
+    }
+  ],
+  "source_label": "From your materials",
+  "next_review": {
+    "due": "2026-11-07T18:05:00.000000Z",
+    "interval_days": 3.0
+  },
+  "mastery": 0.62
+}

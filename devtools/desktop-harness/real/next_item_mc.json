@@ -1,0 +1,24 @@
+{
+ "kind": "item",
+ "reason": "new",
+ "lesson": null,
+ "item": {
+  "id": "it_6771a1b325b0ce78",
+  "objective_id": "history:o02",
+  "format": "mc",
+  "prompt": "According to the passage, what are the length, weight, and gold carat of the Golden Spike?",
+  "payload": {
+   "options": [
+    "4 5/8 inches long, 14.03 ounces, and 17.6 carat gold",
+    "6 1/4 inches long, 16.03 ounces, and 24 carat gold",
+    "5 5/8 inches long, 14.03 ounces, and 17.6 carat gold",
+    "5 3/8 inches long, 12.03 ounces, and 18.6 carat gold"
+   ]
+  },
+  "origin": "materials",
+  "source_label": "From your materials",
+  "status": "active",
+  "hints_available": 3
+ },
+ "message": null
+}

@@ -1,0 +1,14 @@
+{
+ "item_id": "real-c-digit-sum",
+ "correct": true,
+ "score": 1.0,
+ "feedback": "Correct. 5/5 tests passed",
+ "correct_answer": "#include <stdio.h>\n\nint main(void) {\n    int n;\n    if (scanf(\"%d\", &n) != 1) return 1;\n    int sum = 0;\n    while (n > 0) {\n        sum += n % 10;\n        n /= 10;\n    }\n    printf(\"%d\\n\", sum);\n    return 0;\n}\n",
+ "citations": [],
+ "source_label": "Not from your materials",
+ "next_review": {
+  "due": "2026-11-08T06:26:27.066860Z",
+  "interval_days": 3.0
+ },
+ "mastery": 0.8763
+}

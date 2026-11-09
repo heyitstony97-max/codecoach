@@ -1,0 +1,11 @@
+{
+  "id": "job_5f3a9c1d2e44",
+  "kind": "import",
+  "status": "running",
+  "pct": 62.5,
+  "stage": "generating questions (objective 25 of 40)",
+  "error": null,
+  "course_id": "us-revolution",
+  "created_at": "2026-11-04T18:02:11.000000Z",
+  "updated_at": "2026-11-04T18:03:40.000000Z"
+}

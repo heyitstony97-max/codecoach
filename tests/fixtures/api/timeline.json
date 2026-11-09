@@ -1,0 +1,69 @@
+{
+  "course_id": "us-revolution",
+  "events": [
+    {
+      "label": "French and Indian War ends",
+      "date_text": "1763",
+      "sort_year": 1763,
+      "passage_id": "rev-ch2:p12:1",
+      "location": "Ch. 2, p. 12, para 1",
+      "quote": "The Treaty of Paris of 1763 ended the French and Indian War."
+    },
+    {
+      "label": "Stamp Act passed",
+      "date_text": "March 22, 1765",
+      "sort_year": 1765,
+      "passage_id": "rev-ch2:p14:3",
+      "location": "Ch. 2, p. 14, para 3",
+      "quote": "Parliament passed the Stamp Act on March 22, 1765."
+    },
+    {
+      "label": "Boston Massacre",
+      "date_text": "March 5, 1770",
+      "sort_year": 1770,
+      "passage_id": "rev-ch2:p17:2",
+      "location": "Ch. 2, p. 17, para 2",
+      "quote": "On March 5, 1770, British soldiers fired on a crowd in Boston."
+    },
+    {
+      "label": "Boston Tea Party",
+      "date_text": "December 16, 1773",
+      "sort_year": 1773,
+      "passage_id": "rev-ch2:p19:1",
+      "location": "Ch. 2, p. 19, para 1",
+      "quote": "On December 16, 1773, colonists destroyed East India Company tea."
+    },
+    {
+      "label": "First Continental Congress",
+      "date_text": "September 1774",
+      "sort_year": 1774,
+      "passage_id": "rev-ch2:p21:2",
+      "location": "Ch. 2, p. 21, para 2",
+      "quote": "The First Continental Congress met in September 1774."
+    },
+    {
+      "label": "Lexington and Concord",
+      "date_text": "April 19, 1775",
+      "sort_year": 1775,
+      "passage_id": "rev-ch2:p23:1",
+      "location": "Ch. 2, p. 23, para 1",
+      "quote": "Fighting began at Lexington and Concord on April 19, 1775."
+    },
+    {
+      "label": "Declaration adopted",
+      "date_text": "July 4, 1776",
+      "sort_year": 1776,
+      "passage_id": "rev-ch2:p27:4",
+      "location": "Ch. 2, p. 27, para 4",
+      "quote": "Congress adopted the Declaration of Independence on July 4, 1776."
+    },
+    {
+      "label": "Siege of Yorktown ends",
+      "date_text": "October 19, 1781",
+      "sort_year": 1781,
+      "passage_id": "rev-ch2:p33:2",
+      "location": "Ch. 2, p. 33, para 2",
+      "quote": "Cornwallis surrendered at Yorktown on October 19, 1781."
+    }
+  ]
+}

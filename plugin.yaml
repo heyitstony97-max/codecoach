@@ -1,0 +1,40 @@
+name: codecoach
+version: "1.0.0"
+manifest_version: 2
+description: Learn to code by building a real program, one small step at a time. Every example really ran, every pass is a real test, and hints never give away the answer.
+author: Anthony Taylor
+license: MIT
+requires_hermes: ">=0.22.7"
+provides_tools:
+  - codecoach_import
+  - codecoach_next
+  - codecoach_answer
+  - codecoach_hint
+  - codecoach_progress
+  - codecoach_report
+  - codecoach_ask
+python_dependencies:
+  - "sympy>=1.12,<1.15"
+tags: [education, programming, tutor, learning, c, python]
+config_schema:
+  default_mode:
+    type: str
+    default: strict
+    choices: [strict, open]
+    label: Default import mode
+    description: "strict uses only facts found in your materials; open may add model knowledge, labelled."
+  allow_unsandboxed_code:
+    type: bool
+    default: false
+    label: Allow unsandboxed code
+    description: Run code exercises without the bubblewrap sandbox when it is not installed. Leave off unless you trust the exercises.
+  bank_per_objective:
+    type: int
+    default: 3
+    label: Questions per topic
+    description: How many checked questions to prepare for each topic.
+  llm_timeout_s:
+    type: int
+    default: 600
+    label: Model timeout (seconds)
+    description: Seconds to wait for each model call; local models need minutes

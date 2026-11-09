@@ -1,0 +1,83 @@
+{
+  "course_id": "us-revolution",
+  "total": 17,
+  "by_gate": [
+    {
+      "gate_code": "quote_missing",
+      "label": "Quote not found in your materials",
+      "count": 6
+    },
+    {
+      "gate_code": "unsupported_fact",
+      "label": "Answer contains a fact (number, date or name) the quote does not support",
+      "count": 4
+    },
+    {
+      "gate_code": "ambiguous",
+      "label": "More than one answer was supported by the source",
+      "count": 2
+    },
+    {
+      "gate_code": "bad_cloze",
+      "label": "The blank was not an exact phrase from the source",
+      "count": 1
+    },
+    {
+      "gate_code": "framing_fact",
+      "label": "Lesson intro added a fact that is not in the source",
+      "count": 1
+    },
+    {
+      "gate_code": "key_mismatch",
+      "label": "Answer key disagreed with the computed answer",
+      "count": 0
+    },
+    {
+      "gate_code": "weak_tests",
+      "label": "Code tests were too weak or did not pass the reference solution",
+      "count": 0
+    },
+    {
+      "gate_code": "self_check_failed",
+      "label": "The question failed its own consistency check",
+      "count": 0
+    },
+    {
+      "gate_code": "schema_invalid",
+      "label": "The model's output was malformed",
+      "count": 3
+    }
+  ],
+  "recent": [
+    {
+      "id": 17,
+      "course_id": "us-revolution",
+      "objective_id": "us-revolution:o05",
+      "format": "mc",
+      "gate_code": "unsupported_fact",
+      "detail": "year '1766' is not in the cited quote",
+      "draft_hash": "a41c9e07b2d3f5a8",
+      "at": "2026-11-04T18:02:40.000000Z"
+    },
+    {
+      "id": 16,
+      "course_id": "us-revolution",
+      "objective_id": "us-revolution:o07",
+      "format": "cloze",
+      "gate_code": "bad_cloze",
+      "detail": "blank 'Parliament' is not an exact span of the quote",
+      "draft_hash": "77be01c93a6d12ef",
+      "at": "2026-11-04T18:02:31.000000Z"
+    },
+    {
+      "id": 15,
+      "course_id": "us-revolution",
+      "objective_id": "us-revolution:o11",
+      "format": "mc",
+      "gate_code": "quote_missing",
+      "detail": "quote not found in rev-ch2:p15:2",
+      "draft_hash": "0d5f88a1c4e92b36",
+      "at": "2026-11-04T18:02:22.000000Z"
+    }
+  ]
+}

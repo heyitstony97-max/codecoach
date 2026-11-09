@@ -1,0 +1,1097 @@
+{
+  "course": {
+    "id": "us-revolution",
+    "title": "The American Revolution (NPS readings)",
+    "mode": "strict",
+    "mode_reason": "Imported materials: only facts found in them are used.",
+    "created_at": "2026-11-04T18:02:11.000000Z",
+    "objectives": 40,
+    "covered": 37,
+    "not_covered": 3,
+    "items_active": 147,
+    "mastery": 0.485,
+    "due_reviews": 37
+  },
+  "units": [
+    {
+      "id": "u1",
+      "title": "Roots of the Conflict",
+      "lessons": [
+        {
+          "id": "u1l1",
+          "title": "The French and Indian War",
+          "objectives": [
+            {
+              "id": "us-revolution:o01",
+              "unit": "u1",
+              "lesson": "u1l1",
+              "verb": "explain",
+              "statement": "Explain why Britain's war debt followed the Seven Years' War.",
+              "kind": "reading",
+              "prereqs": [],
+              "passage_ids": [
+                "rev-ch2:p12:1",
+                "rev-ch2:p12:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.85,
+              "items_active": 4,
+              "due_reviews": 1,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o02",
+              "unit": "u1",
+              "lesson": "u1l1",
+              "verb": "identify",
+              "statement": "Identify the territory Britain gained in 1763.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o01"
+              ],
+              "passage_ids": [
+                "rev-ch2:p12:2",
+                "rev-ch2:p12:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.78,
+              "items_active": 5,
+              "due_reviews": 2,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u1l2",
+          "title": "The Proclamation of 1763",
+          "objectives": [
+            {
+              "id": "us-revolution:o03",
+              "unit": "u1",
+              "lesson": "u1l2",
+              "verb": "describe",
+              "statement": "Describe what the Proclamation Line forbade.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o01"
+              ],
+              "passage_ids": [
+                "rev-ch2:p13:1",
+                "rev-ch2:p13:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.66,
+              "items_active": 3,
+              "due_reviews": 3,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o04",
+              "unit": "u1",
+              "lesson": "u1l2",
+              "verb": "explain",
+              "statement": "Explain colonial reaction to the Proclamation.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o03"
+              ],
+              "passage_ids": [
+                "rev-ch2:p13:2",
+                "rev-ch2:p13:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.55,
+              "items_active": 4,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u1l3",
+          "title": "The Stamp Act",
+          "objectives": [
+            {
+              "id": "us-revolution:o05",
+              "unit": "u1",
+              "lesson": "u1l3",
+              "verb": "state",
+              "statement": "State what the Stamp Act taxed.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o03"
+              ],
+              "passage_ids": [
+                "rev-ch2:p14:1",
+                "rev-ch2:p14:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.43,
+              "items_active": 5,
+              "due_reviews": 1,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o06",
+              "unit": "u1",
+              "lesson": "u1l3",
+              "verb": "explain",
+              "statement": "Explain 'no taxation without representation'.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o05"
+              ],
+              "passage_ids": [
+                "rev-ch2:p14:2",
+                "rev-ch2:p14:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.31,
+              "items_active": 3,
+              "due_reviews": 2,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u1l4",
+          "title": "The Townshend Acts",
+          "objectives": [
+            {
+              "id": "us-revolution:o07",
+              "unit": "u1",
+              "lesson": "u1l4",
+              "verb": "list",
+              "statement": "List the goods taxed by the Townshend duties.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o05"
+              ],
+              "passage_ids": [
+                "rev-ch2:p15:1",
+                "rev-ch2:p15:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.2,
+              "items_active": 4,
+              "due_reviews": 0,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o08",
+              "unit": "u1",
+              "lesson": "u1l4",
+              "verb": "describe",
+              "statement": "Describe the colonial boycott response.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o07"
+              ],
+              "passage_ids": [
+                "rev-ch2:p15:2",
+                "rev-ch2:p15:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.08,
+              "items_active": 5,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u1l5",
+          "title": "The Boston Massacre",
+          "objectives": [
+            {
+              "id": "us-revolution:o09",
+              "unit": "u1",
+              "lesson": "u1l5",
+              "verb": "recount",
+              "statement": "Recount the events of March 5, 1770.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o07"
+              ],
+              "passage_ids": [
+                "rev-ch2:p16:1",
+                "rev-ch2:p16:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.0,
+              "items_active": 3,
+              "due_reviews": 0,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o10",
+              "unit": "u1",
+              "lesson": "u1l5",
+              "verb": "explain",
+              "statement": "Explain how the event was used in print.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o09"
+              ],
+              "passage_ids": [
+                "rev-ch2:p16:2",
+                "rev-ch2:p16:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.92,
+              "items_active": 4,
+              "due_reviews": 2,
+              "status_label": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "u2",
+      "title": "Organizing Resistance",
+      "lessons": [
+        {
+          "id": "u2l1",
+          "title": "Committees of Correspondence",
+          "objectives": [
+            {
+              "id": "us-revolution:o11",
+              "unit": "u2",
+              "lesson": "u2l1",
+              "verb": "explain",
+              "statement": "Explain the purpose of the committees.",
+              "kind": "reading",
+              "prereqs": [],
+              "passage_ids": [
+                "rev-ch2:p17:1",
+                "rev-ch2:p17:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.85,
+              "items_active": 5,
+              "due_reviews": 3,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o12",
+              "unit": "u2",
+              "lesson": "u2l1",
+              "verb": "identify",
+              "statement": "Identify how news travelled between colonies.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o11"
+              ],
+              "passage_ids": [
+                "rev-ch2:p17:2",
+                "rev-ch2:p17:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.78,
+              "items_active": 3,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u2l2",
+          "title": "The Tea Act and Tea Party",
+          "objectives": [
+            {
+              "id": "us-revolution:o13",
+              "unit": "u2",
+              "lesson": "u2l2",
+              "verb": "describe",
+              "statement": "Describe the Tea Act's effect on tea prices.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o11"
+              ],
+              "passage_ids": [
+                "rev-ch2:p18:1",
+                "rev-ch2:p18:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.66,
+              "items_active": 4,
+              "due_reviews": 1,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o14",
+              "unit": "u2",
+              "lesson": "u2l2",
+              "verb": "recount",
+              "statement": "Recount the December 1773 protest.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o13"
+              ],
+              "passage_ids": [
+                "rev-ch2:p18:2",
+                "rev-ch2:p18:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.55,
+              "items_active": 5,
+              "due_reviews": 2,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u2l3",
+          "title": "The Coercive Acts",
+          "objectives": [
+            {
+              "id": "us-revolution:o15",
+              "unit": "u2",
+              "lesson": "u2l3",
+              "verb": "list",
+              "statement": "List the measures aimed at Massachusetts.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o13"
+              ],
+              "passage_ids": [
+                "rev-ch2:p19:1",
+                "rev-ch2:p19:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.43,
+              "items_active": 3,
+              "due_reviews": 3,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o16",
+              "unit": "u2",
+              "lesson": "u2l3",
+              "verb": "explain",
+              "statement": "Explain why colonists called them Intolerable.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o15"
+              ],
+              "passage_ids": [
+                "rev-ch2:p19:2",
+                "rev-ch2:p19:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.31,
+              "items_active": 4,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u2l4",
+          "title": "The First Continental Congress",
+          "objectives": [
+            {
+              "id": "us-revolution:o17",
+              "unit": "u2",
+              "lesson": "u2l4",
+              "verb": "identify",
+              "statement": "Identify who attended in 1774.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o15"
+              ],
+              "passage_ids": [],
+              "coverage": "not_covered",
+              "mastery": 0.0,
+              "items_active": 0,
+              "due_reviews": 0,
+              "status_label": "Not in your materials"
+            },
+            {
+              "id": "us-revolution:o18",
+              "unit": "u2",
+              "lesson": "u2l4",
+              "verb": "describe",
+              "statement": "Describe the Continental Association.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o17"
+              ],
+              "passage_ids": [
+                "rev-ch2:p20:2",
+                "rev-ch2:p20:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.08,
+              "items_active": 3,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u2l5",
+          "title": "Lexington and Concord",
+          "objectives": [
+            {
+              "id": "us-revolution:o19",
+              "unit": "u2",
+              "lesson": "u2l5",
+              "verb": "recount",
+              "statement": "Recount the April 1775 march.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o17"
+              ],
+              "passage_ids": [
+                "rev-ch2:p21:1",
+                "rev-ch2:p21:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.0,
+              "items_active": 4,
+              "due_reviews": 0,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o20",
+              "unit": "u2",
+              "lesson": "u2l5",
+              "verb": "explain",
+              "statement": "Explain what 'the shot heard round the world' refers to.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o19"
+              ],
+              "passage_ids": [
+                "rev-ch2:p21:2",
+                "rev-ch2:p21:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.92,
+              "items_active": 5,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "u3",
+      "title": "Declaring Independence",
+      "lessons": [
+        {
+          "id": "u3l1",
+          "title": "The Second Continental Congress",
+          "objectives": [
+            {
+              "id": "us-revolution:o21",
+              "unit": "u3",
+              "lesson": "u3l1",
+              "verb": "identify",
+              "statement": "Identify the army's commander appointed in 1775.",
+              "kind": "reading",
+              "prereqs": [],
+              "passage_ids": [
+                "rev-ch2:p22:1",
+                "rev-ch2:p22:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.85,
+              "items_active": 3,
+              "due_reviews": 1,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o22",
+              "unit": "u3",
+              "lesson": "u3l1",
+              "verb": "describe",
+              "statement": "Describe the Olive Branch Petition.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o21"
+              ],
+              "passage_ids": [
+                "rev-ch2:p22:2",
+                "rev-ch2:p22:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.78,
+              "items_active": 4,
+              "due_reviews": 2,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u3l2",
+          "title": "Common Sense",
+          "objectives": [
+            {
+              "id": "us-revolution:o23",
+              "unit": "u3",
+              "lesson": "u3l2",
+              "verb": "state",
+              "statement": "State the main argument of the pamphlet.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o21"
+              ],
+              "passage_ids": [
+                "rev-ch2:p23:1",
+                "rev-ch2:p23:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.66,
+              "items_active": 5,
+              "due_reviews": 3,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o24",
+              "unit": "u3",
+              "lesson": "u3l2",
+              "verb": "explain",
+              "statement": "Explain its effect on public opinion.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o23"
+              ],
+              "passage_ids": [],
+              "coverage": "not_covered",
+              "mastery": 0.0,
+              "items_active": 0,
+              "due_reviews": 0,
+              "status_label": "Not in your materials"
+            }
+          ]
+        },
+        {
+          "id": "u3l3",
+          "title": "Drafting the Declaration",
+          "objectives": [
+            {
+              "id": "us-revolution:o25",
+              "unit": "u3",
+              "lesson": "u3l3",
+              "verb": "name",
+              "statement": "Name the Committee of Five members.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o23"
+              ],
+              "passage_ids": [
+                "rev-ch2:p24:1",
+                "rev-ch2:p24:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.43,
+              "items_active": 4,
+              "due_reviews": 1,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o26",
+              "unit": "u3",
+              "lesson": "u3l3",
+              "verb": "identify",
+              "statement": "Identify the principal author.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o25"
+              ],
+              "passage_ids": [
+                "rev-ch2:p24:2",
+                "rev-ch2:p24:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.31,
+              "items_active": 5,
+              "due_reviews": 2,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u3l4",
+          "title": "The Declaration's Argument",
+          "objectives": [
+            {
+              "id": "us-revolution:o27",
+              "unit": "u3",
+              "lesson": "u3l4",
+              "verb": "summarize",
+              "statement": "Summarize the list of grievances.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o25"
+              ],
+              "passage_ids": [
+                "rev-ch2:p25:1",
+                "rev-ch2:p25:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.2,
+              "items_active": 3,
+              "due_reviews": 0,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o28",
+              "unit": "u3",
+              "lesson": "u3l4",
+              "verb": "explain",
+              "statement": "Explain the natural-rights claim.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o27"
+              ],
+              "passage_ids": [
+                "rev-ch2:p25:2",
+                "rev-ch2:p25:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.08,
+              "items_active": 4,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u3l5",
+          "title": "Adoption and Reaction",
+          "objectives": [
+            {
+              "id": "us-revolution:o29",
+              "unit": "u3",
+              "lesson": "u3l5",
+              "verb": "give",
+              "statement": "Give the date of adoption.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o27"
+              ],
+              "passage_ids": [
+                "rev-ch2:p26:1",
+                "rev-ch2:p26:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.0,
+              "items_active": 5,
+              "due_reviews": 0,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o30",
+              "unit": "u3",
+              "lesson": "u3l5",
+              "verb": "describe",
+              "statement": "Describe how the text was publicized.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o29"
+              ],
+              "passage_ids": [
+                "rev-ch2:p26:2",
+                "rev-ch2:p26:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.92,
+              "items_active": 3,
+              "due_reviews": 2,
+              "status_label": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "u4",
+      "title": "Winning the War",
+      "lessons": [
+        {
+          "id": "u4l1",
+          "title": "Early Campaigns",
+          "objectives": [
+            {
+              "id": "us-revolution:o31",
+              "unit": "u4",
+              "lesson": "u4l1",
+              "verb": "describe",
+              "statement": "Describe the Siege of Boston's outcome.",
+              "kind": "reading",
+              "prereqs": [],
+              "passage_ids": [
+                "rev-ch2:p27:1",
+                "rev-ch2:p27:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.85,
+              "items_active": 4,
+              "due_reviews": 3,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o32",
+              "unit": "u4",
+              "lesson": "u4l1",
+              "verb": "explain",
+              "statement": "Explain the New York campaign.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o31"
+              ],
+              "passage_ids": [
+                "rev-ch2:p27:2",
+                "rev-ch2:p27:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.78,
+              "items_active": 5,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u4l2",
+          "title": "Saratoga and the French Alliance",
+          "objectives": [
+            {
+              "id": "us-revolution:o33",
+              "unit": "u4",
+              "lesson": "u4l2",
+              "verb": "explain",
+              "statement": "Explain why Saratoga mattered.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o31"
+              ],
+              "passage_ids": [
+                "rev-ch2:p28:1",
+                "rev-ch2:p28:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.66,
+              "items_active": 3,
+              "due_reviews": 1,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o34",
+              "unit": "u4",
+              "lesson": "u4l2",
+              "verb": "identify",
+              "statement": "Identify the 1778 treaty terms.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o33"
+              ],
+              "passage_ids": [
+                "rev-ch2:p28:2",
+                "rev-ch2:p28:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.55,
+              "items_active": 4,
+              "due_reviews": 2,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u4l3",
+          "title": "The Southern Campaign",
+          "objectives": [
+            {
+              "id": "us-revolution:o35",
+              "unit": "u4",
+              "lesson": "u4l3",
+              "verb": "describe",
+              "statement": "Describe the shift of British strategy to the South.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o33"
+              ],
+              "passage_ids": [],
+              "coverage": "not_covered",
+              "mastery": 0.0,
+              "items_active": 0,
+              "due_reviews": 0,
+              "status_label": "Not in your materials"
+            },
+            {
+              "id": "us-revolution:o36",
+              "unit": "u4",
+              "lesson": "u4l3",
+              "verb": "identify",
+              "statement": "Identify the battle of Cowpens.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o35"
+              ],
+              "passage_ids": [
+                "rev-ch2:p29:2",
+                "rev-ch2:p29:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.31,
+              "items_active": 3,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u4l4",
+          "title": "Yorktown",
+          "objectives": [
+            {
+              "id": "us-revolution:o37",
+              "unit": "u4",
+              "lesson": "u4l4",
+              "verb": "recount",
+              "statement": "Recount the siege of 1781.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o35"
+              ],
+              "passage_ids": [
+                "rev-ch2:p30:1",
+                "rev-ch2:p30:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.2,
+              "items_active": 4,
+              "due_reviews": 0,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o38",
+              "unit": "u4",
+              "lesson": "u4l4",
+              "verb": "identify",
+              "statement": "Identify the role of the French fleet.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o37"
+              ],
+              "passage_ids": [
+                "rev-ch2:p30:2",
+                "rev-ch2:p30:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.08,
+              "items_active": 5,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        },
+        {
+          "id": "u4l5",
+          "title": "The Treaty of Paris",
+          "objectives": [
+            {
+              "id": "us-revolution:o39",
+              "unit": "u4",
+              "lesson": "u4l5",
+              "verb": "give",
+              "statement": "Give the year the treaty was signed.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o37"
+              ],
+              "passage_ids": [
+                "rev-ch2:p31:1",
+                "rev-ch2:p31:2"
+              ],
+              "coverage": "covered",
+              "mastery": 0.0,
+              "items_active": 3,
+              "due_reviews": 0,
+              "status_label": null
+            },
+            {
+              "id": "us-revolution:o40",
+              "unit": "u4",
+              "lesson": "u4l5",
+              "verb": "describe",
+              "statement": "Describe the boundaries it set.",
+              "kind": "reading",
+              "prereqs": [
+                "us-revolution:o39"
+              ],
+              "passage_ids": [
+                "rev-ch2:p31:2",
+                "rev-ch2:p31:3"
+              ],
+              "coverage": "covered",
+              "mastery": 0.92,
+              "items_active": 4,
+              "due_reviews": 0,
+              "status_label": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "prereq": "us-revolution:o01",
+      "objective": "us-revolution:o02"
+    },
+    {
+      "prereq": "us-revolution:o01",
+      "objective": "us-revolution:o03"
+    },
+    {
+      "prereq": "us-revolution:o03",
+      "objective": "us-revolution:o04"
+    },
+    {
+      "prereq": "us-revolution:o03",
+      "objective": "us-revolution:o05"
+    },
+    {
+      "prereq": "us-revolution:o05",
+      "objective": "us-revolution:o06"
+    },
+    {
+      "prereq": "us-revolution:o05",
+      "objective": "us-revolution:o07"
+    },
+    {
+      "prereq": "us-revolution:o07",
+      "objective": "us-revolution:o08"
+    },
+    {
+      "prereq": "us-revolution:o07",
+      "objective": "us-revolution:o09"
+    },
+    {
+      "prereq": "us-revolution:o09",
+      "objective": "us-revolution:o10"
+    },
+    {
+      "prereq": "us-revolution:o11",
+      "objective": "us-revolution:o12"
+    },
+    {
+      "prereq": "us-revolution:o11",
+      "objective": "us-revolution:o13"
+    },
+    {
+      "prereq": "us-revolution:o13",
+      "objective": "us-revolution:o14"
+    },
+    {
+      "prereq": "us-revolution:o13",
+      "objective": "us-revolution:o15"
+    },
+    {
+      "prereq": "us-revolution:o15",
+      "objective": "us-revolution:o16"
+    },
+    {
+      "prereq": "us-revolution:o15",
+      "objective": "us-revolution:o17"
+    },
+    {
+      "prereq": "us-revolution:o17",
+      "objective": "us-revolution:o18"
+    },
+    {
+      "prereq": "us-revolution:o17",
+      "objective": "us-revolution:o19"
+    },
+    {
+      "prereq": "us-revolution:o19",
+      "objective": "us-revolution:o20"
+    },
+    {
+      "prereq": "us-revolution:o21",
+      "objective": "us-revolution:o22"
+    },
+    {
+      "prereq": "us-revolution:o21",
+      "objective": "us-revolution:o23"
+    },
+    {
+      "prereq": "us-revolution:o23",
+      "objective": "us-revolution:o24"
+    },
+    {
+      "prereq": "us-revolution:o23",
+      "objective": "us-revolution:o25"
+    },
+    {
+      "prereq": "us-revolution:o25",
+      "objective": "us-revolution:o26"
+    },
+    {
+      "prereq": "us-revolution:o25",
+      "objective": "us-revolution:o27"
+    },
+    {
+      "prereq": "us-revolution:o27",
+      "objective": "us-revolution:o28"
+    },
+    {
+      "prereq": "us-revolution:o27",
+      "objective": "us-revolution:o29"
+    },
+    {
+      "prereq": "us-revolution:o29",
+      "objective": "us-revolution:o30"
+    },
+    {
+      "prereq": "us-revolution:o31",
+      "objective": "us-revolution:o32"
+    },
+    {
+      "prereq": "us-revolution:o31",
+      "objective": "us-revolution:o33"
+    },
+    {
+      "prereq": "us-revolution:o33",
+      "objective": "us-revolution:o34"
+    },
+    {
+      "prereq": "us-revolution:o33",
+      "objective": "us-revolution:o35"
+    },
+    {
+      "prereq": "us-revolution:o35",
+      "objective": "us-revolution:o36"
+    },
+    {
+      "prereq": "us-revolution:o35",
+      "objective": "us-revolution:o37"
+    },
+    {
+      "prereq": "us-revolution:o37",
+      "objective": "us-revolution:o38"
+    },
+    {
+      "prereq": "us-revolution:o37",
+      "objective": "us-revolution:o39"
+    },
+    {
+      "prereq": "us-revolution:o39",
+      "objective": "us-revolution:o40"
+    }
+  ],
+  "summary": {
+    "objectives": 40,
+    "covered": 37,
+    "not_covered": 3,
+    "mastered": 8,
+    "mean_mastery": 0.485
+  }
+}

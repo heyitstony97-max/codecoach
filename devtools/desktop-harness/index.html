@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CodeCoach desktop harness</title>
+<script type="importmap">
+{ "imports": {
+  "react": "/vendor/react.js",
+  "react/jsx-runtime": "/vendor/react-jsx-runtime.js",
+  "react-dom/client": "/vendor/react-dom-client.js",
+  "@hermes/plugin-sdk": "/sdk-stub.js"
+} }
+</script>
+<link rel="stylesheet" href="/codicon.css">
+<style>
+  /* Dark-theme stand-ins for the host's --ui-* variables. */
+  :root {
+    --ui-base: #17181b; --ui-text-primary: #e8e9ec; --ui-text-secondary: #b4b7bf; --ui-text-tertiary: #8d919b;
+    --ui-text-quaternary: #666a74; --ui-stroke-secondary: #34373e; --ui-stroke-tertiary: #2a2c32;
+    --ui-accent: #6aa5ff; --ui-green: #4cc38a; --ui-yellow: #e5b84b; --ui-red: #f06a6a;
+    --ui-bg-tertiary: #202226; --ui-control-hover-background: #2a2d33; --ui-control-active-background: #32363e;
+  }
+  html, body { margin: 0; height: 100%; background: var(--ui-base); color: var(--ui-text-primary);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #root { height: 100%; }
+  .spin { animation: s 1s linear infinite } @keyframes s { to { transform: rotate(360deg) } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/boot.js"></script>
+</body>
+</html>

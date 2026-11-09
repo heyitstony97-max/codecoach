@@ -1,0 +1,64 @@
+{
+ "course_id": "history",
+ "objectives": 69,
+ "covered": 69,
+ "not_covered": 0,
+ "mastered": 0,
+ "mean_mastery": 0.2401,
+ "items_generated": 61,
+ "items_active": 61,
+ "items_dropped": 0,
+ "items_reported": 0,
+ "attempts": 8,
+ "accuracy": 0.875,
+ "due_reviews": 0,
+ "drops_by_gate": {
+  "quote_missing": 0,
+  "unsupported_fact": 21,
+  "ambiguous": 8,
+  "bad_cloze": 9,
+  "framing_fact": 1,
+  "key_mismatch": 0,
+  "weak_tests": 0,
+  "self_check_failed": 9,
+  "schema_invalid": 0
+ },
+ "reports": 0,
+ "recent_days": [
+  {
+   "date": "2026-10-30",
+   "attempts": 0,
+   "correct": 0
+  },
+  {
+   "date": "2026-10-31",
+   "attempts": 0,
+   "correct": 0
+  },
+  {
+   "date": "2026-11-01",
+   "attempts": 0,
+   "correct": 0
+  },
+  {
+   "date": "2026-11-02",
+   "attempts": 0,
+   "correct": 0
+  },
+  {
+   "date": "2026-11-03",
+   "attempts": 0,
+   "correct": 0
+  },
+  {
+   "date": "2026-11-04",
+   "attempts": 0,
+   "correct": 0
+  },
+  {
+   "date": "2026-11-05",
+   "attempts": 8,
+   "correct": 7
+  }
+ ]
+}

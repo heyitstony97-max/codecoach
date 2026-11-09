@@ -1,0 +1,253 @@
+{
+ "course_id": "history",
+ "total": 48,
+ "by_gate": [
+  {
+   "gate_code": "quote_missing",
+   "label": "Quote not found in your materials",
+   "count": 0
+  },
+  {
+   "gate_code": "unsupported_fact",
+   "label": "Answer contains a fact (number, date or name) the quote does not support",
+   "count": 21
+  },
+  {
+   "gate_code": "ambiguous",
+   "label": "More than one answer was supported by the source",
+   "count": 8
+  },
+  {
+   "gate_code": "bad_cloze",
+   "label": "The blank was not an exact phrase from the source",
+   "count": 9
+  },
+  {
+   "gate_code": "framing_fact",
+   "label": "Lesson intro added a fact that is not in the source",
+   "count": 1
+  },
+  {
+   "gate_code": "key_mismatch",
+   "label": "Answer key disagreed with the computed answer",
+   "count": 0
+  },
+  {
+   "gate_code": "weak_tests",
+   "label": "Code tests were too weak or did not pass the reference solution",
+   "count": 0
+  },
+  {
+   "gate_code": "self_check_failed",
+   "label": "The question failed its own consistency check",
+   "count": 9
+  },
+  {
+   "gate_code": "schema_invalid",
+   "label": "The model's output was malformed",
+   "count": 0
+  }
+ ],
+ "recent": [
+  {
+   "id": 48,
+   "course_id": "history",
+   "objective_id": "history:o63",
+   "format": "short",
+   "gate_code": "self_check_failed",
+   "detail": "the prompt gives away the answer: '1882 Chinese Exclusion Act' (+1 more)",
+   "draft_hash": "7ac70b7cf4bebdc6",
+   "at": "2026-11-05T06:09:55.690654Z"
+  },
+  {
+   "id": 47,
+   "course_id": "history",
+   "objective_id": "history:o63",
+   "format": "cloze",
+   "gate_code": "bad_cloze",
+   "detail": "the sentence with the blank filled is not an exact span of a quote",
+   "draft_hash": "690ea11a5b838c40",
+   "at": "2026-11-05T06:09:36.057032Z"
+  },
+  {
+   "id": 46,
+   "course_id": "history",
+   "objective_id": "history:o63",
+   "format": "mc",
+   "gate_code": "unsupported_fact",
+   "detail": "prompt: u, s not in the quote",
+   "draft_hash": "44ec51ac2e33204f",
+   "at": "2026-11-05T06:09:13.474843Z"
+  },
+  {
+   "id": 45,
+   "course_id": "history",
+   "objective_id": "history:o59",
+   "format": "cloze",
+   "gate_code": "bad_cloze",
+   "detail": "alias 'origin' is not in the quote (+1 more)",
+   "draft_hash": "95811359863a5003",
+   "at": "2026-11-05T06:06:58.813370Z"
+  },
+  {
+   "id": 44,
+   "course_id": "history",
+   "objective_id": "history:o59",
+   "format": "mc",
+   "gate_code": "unsupported_fact",
+   "detail": "answer: there not in the quote",
+   "draft_hash": "18a04008f474185d",
+   "at": "2026-11-05T06:06:34.881313Z"
+  },
+  {
+   "id": 43,
+   "course_id": "history",
+   "objective_id": "history:o57",
+   "format": "mc",
+   "gate_code": "unsupported_fact",
+   "detail": "answer: built not in the quote",
+   "draft_hash": "4a366a02039f3367",
+   "at": "2026-11-05T06:02:07.667946Z"
+  },
+  {
+   "id": 42,
+   "course_id": "history",
+   "objective_id": "history:o53",
+   "format": "mc",
+   "gate_code": "unsupported_fact",
+   "detail": "answer: laid not in the quote",
+   "draft_hash": "d0235509c5d85c83",
+   "at": "2026-11-05T06:00:04.514285Z"
+  },
+  {
+   "id": 41,
+   "course_id": "history",
+   "objective_id": "history:o50",
+   "format": "cloze",
+   "gate_code": "bad_cloze",
+   "detail": "the sentence with the blank filled is not an exact span of a quote",
+   "draft_hash": "fbe681929d403c51",
+   "at": "2026-11-05T05:58:12.784761Z"
+  },
+  {
+   "id": 40,
+   "course_id": "history",
+   "objective_id": "history:o50",
+   "format": "mc",
+   "gate_code": "unsupported_fact",
+   "detail": "no single quote holds both the question's subject and the answer",
+   "draft_hash": "ea090e9e6950aaa5",
+   "at": "2026-11-05T05:57:53.662789Z"
+  },
+  {
+   "id": 39,
+   "course_id": "history",
+   "objective_id": "history:o49",
+   "format": "short",
+   "gate_code": "self_check_failed",
+   "detail": "the prompt gives away the answer: 'Railway Act of 1862'",
+   "draft_hash": "83eb4142601595e8",
+   "at": "2026-11-05T05:54:28.799461Z"
+  },
+  {
+   "id": 38,
+   "course_id": "history",
+   "objective_id": "history:o49",
+   "format": "cloze",
+   "gate_code": "bad_cloze",
+   "detail": "the sentence with the blank filled is not an exact span of a quote (+1 more)",
+   "draft_hash": "654583a8102d1fd1",
+   "at": "2026-11-05T05:54:03.242511Z"
+  },
+  {
+   "id": 37,
+   "course_id": "history",
+   "objective_id": "history:o49",
+   "format": "mc",
+   "gate_code": "ambiguous",
+   "detail": "option 3 is also supported by the quote: 'Central Pacific Railroad (CPRR)'",
+   "draft_hash": "d3641da2b20eaa90",
+   "at": "2026-11-05T05:53:43.235597Z"
+  },
+  {
+   "id": 36,
+   "course_id": "history",
+   "objective_id": "history:o48",
+   "format": "mc",
+   "gate_code": "unsupported_fact",
+   "detail": "answer: archaeological not in the quote (+1 more)",
+   "draft_hash": "fb5c00aeefb99c37",
+   "at": "2026-11-05T05:52:48.732066Z"
+  },
+  {
+   "id": 35,
+   "course_id": "history",
+   "objective_id": "history:o46",
+   "format": "mc",
+   "gate_code": "unsupported_fact",
+   "detail": "the quote negates the answer: 'No personal writings'",
+   "draft_hash": "30cf57bb2f428490",
+   "at": "2026-11-05T05:51:45.580050Z"
+  },
+  {
+   "id": 34,
+   "course_id": "history",
+   "objective_id": "history:o44",
+   "format": "mc",
+   "gate_code": "unsupported_fact",
+   "detail": "the quote negates the answer: 'Without the labor of over 12,000 Chinese immigrant laborers'",
+   "draft_hash": "d1551d3d086cd5b4",
+   "at": "2026-11-05T05:50:36.116671Z"
+  },
+  {
+   "id": 33,
+   "course_id": "history",
+   "objective_id": "history:o43",
+   "format": "math",
+   "gate_code": "self_check_failed",
+   "detail": "checker could not decide: ModuleNotFoundError: No module named 'sympy'",
+   "draft_hash": "04142212262b8747",
+   "at": "2026-11-05T05:50:21.848375Z"
+  },
+  {
+   "id": 32,
+   "course_id": "history",
+   "objective_id": "history:o43",
+   "format": "math",
+   "gate_code": "self_check_failed",
+   "detail": "checker could not decide: ModuleNotFoundError: No module named 'sympy'",
+   "draft_hash": "8e9e4e665106e6cb",
+   "at": "2026-11-05T05:50:00.952941Z"
+  },
+  {
+   "id": 31,
+   "course_id": "history",
+   "objective_id": "history:o43",
+   "format": "math",
+   "gate_code": "self_check_failed",
+   "detail": "checker could not decide: ModuleNotFoundError: No module named 'sympy'",
+   "draft_hash": "f3fe734dc1aab8fd",
+   "at": "2026-11-05T05:46:36.142246Z"
+  },
+  {
+   "id": 30,
+   "course_id": "history",
+   "objective_id": "history:o42",
+   "format": "mc",
+   "gate_code": "ambiguous",
+   "detail": "option 1 is also supported by the quote: 'Leland Stanford, Tilden G. Abbot, President U.S. G' (+2 more)",
+   "draft_hash": "1e43a7bf6f072410",
+   "at": "2026-11-05T05:45:47.627342Z"
+  },
+  {
+   "id": 29,
+   "course_id": "history",
+   "objective_id": "history:o38",
+   "format": "short",
+   "gate_code": "self_check_failed",
+   "detail": "the prompt gives away the answer: 'Nye and Co.' (+2 more)",
+   "draft_hash": "6f2e1ddc5fcedd0e",
+   "at": "2026-11-05T05:43:58.290914Z"
+  }
+ ]
+}

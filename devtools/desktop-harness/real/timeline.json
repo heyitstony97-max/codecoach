@@ -1,0 +1,37 @@
+{
+ "course_id": "history",
+ "events": [
+  {
+   "label": "Spike ordered for Nevada",
+   "date_text": "May 5, 1869",
+   "sort_year": 1869,
+   "passage_id": "history-md:nevada-s-silver-spike:1",
+   "location": "Nevada's Silver Spike, para 1",
+   "quote": "The spike was ordered on May 5, 1869 by Railroad Commissioner and candidate for Governor of the new State of Nevada, Mr. F.A. Tritle."
+  },
+  {
+   "label": "Monday, 12:47 p.m.",
+   "date_text": "May 10, 1869",
+   "sort_year": 1869,
+   "passage_id": "history-md:the-ceremony:4",
+   "location": "The Ceremony, para 4",
+   "quote": "The time was 12:47 p.m., Monday, May 10, 1869."
+  },
+  {
+   "label": "Hewes donates the Golden Spike to Stanford",
+   "date_text": "1892",
+   "sort_year": 1892,
+   "passage_id": "history-md:a-scattering-of-history:1",
+   "location": "A Scattering of History, para 1",
+   "quote": "In 1892, Hewes donated his extensive rare art collection, including the Golden Spike, to the museum of newly built Leland Stanford Junior University in Palo Alto, California."
+  },
+  {
+   "label": "Christies Auction House to sell the Arizona spike",
+   "date_text": "January 2023",
+   "sort_year": 2023,
+   "passage_id": "history-md:a-scattering-of-history:3",
+   "location": "A Scattering of History, para 3",
+   "quote": "In January 2023, Christies Auction House was commissioned to sell the Arizona Gold and Silver Spike for the Museum of the city of New York."
+  }
+ ]
+}

@@ -1,0 +1,49 @@
+{
+  "course_id": "us-revolution",
+  "objectives": 40,
+  "covered": 37,
+  "not_covered": 3,
+  "mastered": 9,
+  "mean_mastery": 0.485,
+  "items_generated": 143,
+  "items_active": 124,
+  "items_dropped": 17,
+  "items_reported": 2,
+  "attempts": 88,
+  "accuracy": 0.72,
+  "due_reviews": 6,
+  "drops_by_gate": {
+    "quote_missing": 6,
+    "unsupported_fact": 4,
+    "ambiguous": 2,
+    "bad_cloze": 1,
+    "framing_fact": 1,
+    "key_mismatch": 0,
+    "weak_tests": 0,
+    "self_check_failed": 0,
+    "schema_invalid": 3
+  },
+  "reports": 2,
+  "recent_days": [
+    {
+      "date": "2026-11-01",
+      "attempts": 12,
+      "correct": 8
+    },
+    {
+      "date": "2026-11-02",
+      "attempts": 20,
+      "correct": 14
+    },
+    {
+      "date": "2026-11-03",
+      "attempts": 0,
+      "correct": 0
+    },
+    {
+      "date": "2026-11-04",
+      "attempts": 31,
+      "correct": 24
+    }
+  ]
+}
