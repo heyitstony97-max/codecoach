@@ -57,21 +57,19 @@ Import lecture notes, a book chapter or docs in the **Library**, and CodeCoach t
 
 You need Hermes 0.22.7 or newer.
 
+CodeCoach is used from Hermes Desktop, so install it there if you can.
+
+**From Hermes Desktop (recommended).** Open **Capabilities -> Plugins**, choose **Install from Git** and enter `https://github.com/heyitstony97-max/codecoach` (or install `codecoach` from the plugin catalog). The dialog installs it and turns it on: both the tools and the desktop page. Restart the gateway once (`hermes gateway restart`) so the page's routes mount, and **CodeCoach** appears in the sidebar.
+
+**From the command line.**
+
 ```
 hermes plugins install heyitstony97-max/codecoach
+hermes plugins enable codecoach
+hermes gateway restart
 ```
 
-(Once CodeCoach is in the plugin catalog, `hermes plugins install codecoach` does the same.) Installing does not turn it on. There are two switches, and both start off:
-
-1. **The Python half** (tools and the `/codecoach` command): run
-
-   ```
-   hermes plugins enable codecoach
-   ```
-
-   Enabling installs the one runtime dependency, `sympy` (pinned `>=1.12,<1.15`), through Hermes's dependency manager. Check with `hermes plugins list`.
-
-2. **The desktop page**: in Hermes Desktop open **Capabilities -> Plugins** and switch CodeCoach on. The page appears in the sidebar as "CodeCoach". Its REST routes mount after a **gateway restart**, so restart the gateway once after enabling (the `restart` subcommand of `hermes gateway`).
+Enabling installs the one runtime dependency, `sympy` (pinned `>=1.12,<1.15`), through Hermes's dependency manager. Check with `hermes plugins list`. Hermes keeps a plugin's desktop page off until you turn it on, and a command-line install doesn't do that. So also open **Capabilities -> Plugins** in Hermes Desktop and switch on the **Desktop** switch in CodeCoach's row. If CodeCoach still isn't in the sidebar, that switch is the one to check.
 
 **Running code needs** `bubblewrap` (`bwrap`) and, for C, `gcc`. Install both with your package manager and check them with `bwrap --version` and `gcc --version`. Without a working `bwrap`, CodeCoach refuses to run any code (it fails closed) and the Projects page says what to install.
 
