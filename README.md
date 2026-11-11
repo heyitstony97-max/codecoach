@@ -83,6 +83,7 @@ The same checks apply to the ready-made project: its lessons are shipped data, b
 ## Honest limits
 
 - **Lesson text is the model's own words.** It is labelled *Tutor's explanation* and is not checked against a source. The examples, outputs, tests and answer keys are checked; the prose is not.
+- **A drill's explanation can be wrong even when its answer key is right.** The key is what the program really printed. The explanation is the model's prose, written before the program ran. Reading 57 real drills from a small free model (`upstage/solar-mini4:free`) against their programs, 9 explanations said something false: 6 named a value the program did not print, and 3 were wrong in words. Since 1.1.1 an explanation that plainly contradicts the real output is left out, and the drill says so. That filter is not a proof: on 35 drills it had never seen, it caught 2 of the 4 wrong explanations (both that named a wrong value, neither that was wrong in words) and left out 1 of the 31 right ones. When the explanation and the real output disagree, the output is right.
 - **The checks cannot judge teaching quality.** A step can pass every check and still teach its idea poorly. Use *Try again* on a step you don't like.
 - **Tests compare exact output** (trailing spaces ignored). The task quotes every line the tests check, but your program still has to print it as quoted.
 - **Plain input-to-output programs only:** no graphics, files, network or randomness.
@@ -165,7 +166,7 @@ Your projects, code, answers and progress are stored only in the data directory 
 env -u PYTHONPATH .venv/bin/python -m pytest -q
 ```
 
-1,772 tests on the dev box: 1,766 pass, and 6 are known holes in the notes features' quote check, kept as expected failures so they stay visible (they are listed in [docs/REDTEAM.md](docs/REDTEAM.md)). The suite needs no network, no model and no Hermes; the code checks run in the real `bwrap` sandbox where it is installed, and tests for a language that is not installed are skipped. Contracts: [docs/PROJECT-CONTRACT.md](docs/PROJECT-CONTRACT.md) (the step checks) and [docs/V11-CONTRACT.md](docs/V11-CONTRACT.md) (languages, model fit, Practice and Test).
+1,812 tests on the dev box: 1,806 pass, and 6 are known holes in the notes features' quote check, kept as expected failures so they stay visible (they are listed in [docs/REDTEAM.md](docs/REDTEAM.md)). The suite needs no network, no model and no Hermes; the code checks run in the real `bwrap` sandbox where it is installed, and tests for a language that is not installed are skipped. Contracts: [docs/PROJECT-CONTRACT.md](docs/PROJECT-CONTRACT.md) (the step checks) and [docs/V11-CONTRACT.md](docs/V11-CONTRACT.md) (languages, model fit, Practice and Test).
 
 ## Licenses and sources
 

@@ -21,6 +21,7 @@ from pydantic import BaseModel
 
 from codecoach.adapt.mastery import iso
 from codecoach.check.code_runner import sandbox_status
+from codecoach.practice.explain_check import shown_explanation
 from codecoach.practice.engine import (MAX_PREDICTION_CHARS, TOPIC_IDS, TOPICS, PracticeEngine, _languages,
                                        engine_for, grade_prediction)
 
@@ -272,7 +273,7 @@ class CheckpointEngine:
                 row[0] += 1 if correct else 0
                 review.append({"n": i + 1, "topic": s["topic"], "correct": correct, "code": rec.get("code", ""),
                                "your_answer": NO_ANSWER if blank else pred,
-                               "expected_stdout": rec.get("stdout", ""), "explanation": list(rec.get("explanation") or [])})
+                               "expected_stdout": rec.get("stdout", ""), "explanation": shown_explanation(rec)})
             by_topic = [{"topic": tp, "title": titles[tp], "correct": per[tp][0], "total": per[tp][1]}
                         for tp in TOPIC_IDS if tp in per]
             result = {"score": sum(r["correct"] for r in review), "total": len(review), "by_topic": by_topic,

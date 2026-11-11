@@ -45,7 +45,7 @@ def test_meta_hides_the_notes_screens_by_default():
     c, _ = client()
     r = c.get(f"{B}/meta")
     assert r.status_code == 200
-    assert r.json() == {"version": "1.1.0", "features": {"notes": False}}
+    assert r.json() == {"version": "1.1.1", "features": {"notes": False}}
 
 
 def test_meta_shows_the_notes_screens_only_when_the_setting_is_exactly_true():
@@ -73,7 +73,7 @@ def test_the_version_is_one_string_in_three_places():
     yaml_text = (ROOT / "plugin.yaml").read_text()
     manifest = json.loads((ROOT / "dashboard" / "manifest.json").read_text())
     assert f'version: "{codecoach.__version__}"' in yaml_text.splitlines()
-    assert manifest["version"] == codecoach.__version__ == "1.1.0"
+    assert manifest["version"] == codecoach.__version__ == "1.1.1"
 
 
 def test_plugin_yaml_declares_show_notes_off_by_default():

@@ -1,5 +1,5 @@
 name: codecoach
-version: "1.1.0"
+version: "1.1.1"
 manifest_version: 2
 description: Teach yourself to code in C, C++, Python, JavaScript, Java, Go, Rust, Ruby or Bash. Build a real program one small step at a time, practice by predicting what code prints, and take no-hints tests. Every example really ran in a sandbox, every pass is a real test, and it warns you when your model is weak in a language.
 author: Anthony Taylor

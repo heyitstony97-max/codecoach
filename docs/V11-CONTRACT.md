@@ -188,6 +188,23 @@ output; the key is the real stdout.
     leak tests).
   - P8 no comment in the code carries a line of the output (`print(x * 6)  # 42`); the prompt asks for no
     comments at all.
+  - P9 (1.1.1) an input the model escaped twice, with the two characters backslash and n where a line break was
+    meant, is given real line breaks before the program is run. The learner sees the input the program read.
+- The explanation is the model's prose, written before the program ran, so it can disagree with the real output.
+  `explain_check.py` (1.1.1) decides at reveal time, for a practice answer and for a test review alike, and for
+  drills stored by 1.1.0 too. The explanation is replaced by one fixed sentence saying it was left out when:
+  - E1 a number it says is printed ("the output is 2", "prints 98", "8, which is printed") is not in the real output;
+  - E2 the last number of a sentence about printing is in neither the real output, the program, its input nor a
+    count of the output's lines, items or characters;
+  - E3 it says the output is spread over lines ("one per line") and the real output is one line;
+  - E4 it lists, in a row, exactly as many numbers as the program printed (four or more), and they are others.
+  The drill stays: its program and its key are real. The check is a filter for plain contradictions and does
+  not prove an explanation right. Known to pass: a wrong value inside a chain of equations when the sentence
+  ends on a right one, wrong reasoning that ends on the right number, a wrong number written as a word, and
+  anything wrong in words only. Known false alarm: numbers printed with nothing between them (`01040916`).
+  Measured on 35 real drills the rules were frozen before (small free model): 4 explanations were wrong, 2
+  were caught (both that named a wrong value), and 1 of the 31 right ones was left out. The tests keep one
+  real miss and the real false alarm visible.
 - Grading is code: the prediction equals the real stdout after stripping trailing spaces per line and trailing
   blank lines. Nothing else is forgiven.
 - Lazy and bounded: `next` serves an unseen stored drill for (language, topic) or builds one in the background,
@@ -225,7 +242,7 @@ API module `codecoach/practice/api.py`: `register(router, get_service)` adds
 
 ## 7. Screen (`desktop/plugin.js`) and `GET /meta`
 
-`GET /meta` -> `{"version": "1.1.0", "features": {"notes": false}}`.
+`GET /meta` -> `{"version": "1.1.1", "features": {"notes": false}}`.
 
 - Views, in order: **Build** (the Projects view, default), **Practice**, **Test**. Every course/notes view (Learn,
   Review, Ask, Sources, map, timeline, progress, import) shows only when `features.notes` is true. With it false no

@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field, field_validator
 from codecoach.adapt.mastery import iso
 from codecoach.check.code_runner import run_snippet, sandbox_status
 from codecoach.core.llm import LLMBadOutput, LLMError, LLMUnavailable, structured_call
+from codecoach.practice.explain_check import real_line_breaks, shown_explanation
 from codecoach.project import _BUILD_LOCK
 
 DRILL_PURPOSE = "codecoach.practice.drill"
@@ -446,6 +447,8 @@ class PracticeEngine:
                 continue
             except LLMError as e:
                 return self._fail(_plain_llm_reason(e))
+            # A model sometimes escapes the input twice: the learner would see a stray backslash and n.
+            reply = reply.model_copy(update={"stdin": real_line_breaks(reply.stdin)})
             try:
                 stdout = self._gate(lang, reply, seen_hashes)
             except GateFail as g:
@@ -516,7 +519,7 @@ class PracticeEngine:
                         "correct": graded["correct"], "at": iso(self.svc.now())})
             self.svc.store.set_meta("practice:attempts", log[-MAX_ATTEMPTS_LOG:])
         return {"correct": graded["correct"], "expected_stdout": rec["stdout"], "lines": graded["lines"],
-                "explanation": list(rec.get("explanation") or [])}
+                "explanation": shown_explanation(rec)}
 
 
 def engine_for(svc) -> PracticeEngine:

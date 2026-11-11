@@ -31,9 +31,14 @@ def py(k, tag="Total"):
     return reply(f'n = sum(range({k}))\nprint(f"{tag}: {{n + 1}}")\n'), f"{tag}: {sum(range(k)) + 1}\n"
 
 
-def cdrill(k):
+def c_expl(k):
+    """An explanation that is true for cdrill(k): C_EXPL itself is only true for k = 4 (it says 30)."""
+    return [f"The loop adds the squares of 1 to {k}.", f"That makes {sum(i * i for i in range(1, k + 1))}, and printf shows it."]
+
+
+def cdrill(k, explanation=None):
     code = C_CODE.replace("i <= 4", f"i <= {k}")
-    return reply(code, explanation=C_EXPL), f"{sum(i * i for i in range(1, k + 1))}\n"
+    return reply(code, explanation=explanation or c_expl(k)), f"{sum(i * i for i in range(1, k + 1))}\n"
 
 
 def seq(*replies):
@@ -169,7 +174,23 @@ def test_three_question_test_end_to_end_c():
         put(c, tid, i + 1, keys[i])
     res = c.post(f"{B}/tests/{tid}/finish").json()
     assert res["score"] == 3 and res["weak_topics"] == [] and all(x["correct"] for x in res["review"])
-    assert "#include" in res["review"][0]["code"] and res["review"][0]["explanation"] == C_EXPL
+    assert "#include" in res["review"][0]["code"] and res["review"][0]["explanation"] == c_expl(3)
+
+
+@needs_sb
+def test_review_leaves_out_an_explanation_that_disagrees_with_the_real_output():
+    """C_EXPL says "That makes 30"; with the loop to 3 or to 5 the program prints 14 or 55. Only the true one is shown."""
+    from codecoach.practice.explain_check import LEFT_OUT
+    c, svc = client(seq(cdrill(3, C_EXPL)[0], cdrill(4, C_EXPL)[0], cdrill(5, C_EXPL)[0]))
+    tid = start(c, "c", 3)["test_id"]
+    t = get(c, tid)
+    assert t["status"] == "ready" and keys_of(svc, t) == ["14\n", "30\n", "55\n"]
+    for i, key in enumerate(["14", "30", "55"]):
+        put(c, tid, i + 1, key)
+    res = c.post(f"{B}/tests/{tid}/finish").json()
+    assert res["score"] == 3                                             # the key is the real output either way
+    assert [r["explanation"] for r in res["review"]] == [[LEFT_OUT], C_EXPL, [LEFT_OUT]]
+    assert [r["expected_stdout"] for r in res["review"]] == ["14\n", "30\n", "55\n"]
 
 
 @needs_sb
