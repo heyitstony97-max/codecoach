@@ -25,7 +25,7 @@ from codecoach.service import CodeCoachService, ServiceConfig, ServiceError, che
 PLUGIN_ID = "codecoach"
 AUX_TASK = "codecoach"
 AUX_DISPLAY = "CodeCoach tutor"
-AUX_DESCRIPTION = "Course import, question drafting and lesson framing for the CodeCoach tutor plugin."
+AUX_DESCRIPTION = "Lessons, practice drills and the model check for the CodeCoach coding tutor (and course import when its notes features are on)."
 DB_NAME = "codecoach.db"
 DEFAULT_TIMEOUT = 600.0     # same as the plugin.yaml llm_timeout_s default; services pass the configured value
 PDF_PAGE_LINES = 2000
@@ -70,6 +70,16 @@ class _BaseLLM:
         self.default_timeout = default_timeout
         self.task_applied: bool | None = None   # filled by the first call: did the task route work?
         self.last_error: str = ""
+        self._route: dict | None = None
+
+    def last_route(self) -> dict | None:
+        """The provider and model the host reported on the most recent answered call, or None."""
+        return dict(self._route) if self._route else None
+
+    def _note_route(self, res: Any) -> None:
+        provider, model = _field(res, "provider"), _field(res, "model")
+        if isinstance(provider, str) and isinstance(model, str) and provider.strip() and model.strip():
+            self._route = {"provider": provider.strip(), "model": model.strip()}
 
     def _kw(self, purpose: str, max_tokens: int | None, timeout: float | None, with_task: bool) -> dict:
         kw: dict[str, Any] = {"purpose": purpose, "timeout": timeout or self.default_timeout}
@@ -83,6 +93,7 @@ class _BaseLLM:
         try:
             out = fn(**base, **self._kw(purpose, max_tokens, timeout, True))
             self.task_applied = bool(self.task)
+            self._note_route(out)
             return out
         except Exception as e:
             if self.task and _is_task_denial(e):
@@ -91,7 +102,9 @@ class _BaseLLM:
                 self.task_applied = False
                 self.last_error = f"{type(e).__name__}: {e}"[:300]
                 try:
-                    return fn(**base, **self._kw(purpose, max_tokens, timeout, False))
+                    out = fn(**base, **self._kw(purpose, max_tokens, timeout, False))
+                    self._note_route(out)
+                    return out
                 except Exception as e2:
                     raise LLMUnavailable(f"{purpose}: {type(e2).__name__}: {e2}") from e2
             raise LLMUnavailable(f"{purpose}: {type(e).__name__}: {e}") from e
@@ -219,12 +232,28 @@ _svc_lock = threading.Lock()
 _svc_cache: dict[str, CodeCoachService] = {}
 
 
+def lang_cache_dir() -> Path:
+    from plugins.plugin_storage import plugin_data_dir
+    return Path(plugin_data_dir(PLUGIN_ID)) / "lang"
+
+
+def configure_languages() -> None:
+    """Keep what the language probes learned (and a compiler's build cache) under the plugin's own data dir, so a
+    page never waits on the same probe twice. If that fails the results simply stay in memory."""
+    try:
+        from codecoach import lang
+        lang.configure(lang_cache_dir())
+    except Exception:
+        pass
+
+
 def build_service_for_ctx(ctx: Any, *, store: Store | None = None) -> CodeCoachService:
     """Plugin-host child: tools and the command. No event emitter (events come from the gateway)."""
     with _svc_lock:
         key = "ctx"
         if key not in _svc_cache:
             cfg = config_from_ctx(ctx)
+            configure_languages()
             _svc_cache[key] = CodeCoachService(store or open_store(), CtxLLM(ctx, default_timeout=cfg.llm_timeout_s),
                                             cfg, path_reader=make_ctx_reader(ctx))
         return _svc_cache[key]
@@ -314,6 +343,7 @@ def build_service_for_gateway(*, store: Store | None = None) -> CodeCoachService
                 from hermes_cli.plugin_events import broadcast_plugin_event
                 broadcast_plugin_event(PLUGIN_ID, event, payload)
             cfg = config_from_hermes()
+            configure_languages()
             _svc_cache[key] = CodeCoachService(store or open_store(), PluginLLM(default_timeout=cfg.llm_timeout_s),
                                             cfg, emit=emit, audio=audio_cache(), exports_dir=exports_dir())
         return _svc_cache[key]

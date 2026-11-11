@@ -54,7 +54,7 @@ def code_of(r):
 def test_list_has_ideas_sandbox_and_projects():
     c, _ = client(Script())
     j = c.get(f"{B}/projects").json()
-    assert set(j) == {"sandbox", "ideas", "projects"} and j["projects"] == [] and 4 <= len(j["ideas"]) <= 6
+    assert set(j) == {"sandbox", "ideas", "starters", "projects"} and j["projects"] == [] and 4 <= len(j["ideas"]) <= 20
 
 
 @needs_sb
@@ -75,7 +75,7 @@ def test_create_validation_errors():
     c, _ = client(Script(plan=plan_reply(4)))
     assert code_of(c.post(f"{B}/projects", json={"idea": "ab", "language": "c"})) == (422, "bad_idea")
     assert code_of(c.post(f"{B}/projects", json={"idea": "x" * 301, "language": "c"})) == (422, "bad_idea")
-    assert code_of(c.post(f"{B}/projects", json={"idea": "a guessing game", "language": "rust"})) == (422, "bad_language")
+    assert code_of(c.post(f"{B}/projects", json={"idea": "a guessing game", "language": "brainfuck"})) == (422, "bad_language")
     assert code_of(c.post(f"{B}/projects", json={"idea": 5, "language": "c"})) == (422, "bad_request")
     assert code_of(c.post(f"{B}/projects", json={})) == (422, "bad_idea")
 

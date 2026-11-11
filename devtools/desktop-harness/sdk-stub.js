@@ -60,3 +60,10 @@ export const host = {
   navigate: p => { window.__navigated = p },
   onEvent: () => () => {}
 }
+
+// The host's one copy path (lib/clipboard.ts). The harness records the text and tries the browser clipboard.
+export async function writeClipboardText(text) {
+  if (!text) return
+  window.__copied = text
+  try { await navigator.clipboard.writeText(text) } catch (_e) { /* the stub still recorded it */ }
+}

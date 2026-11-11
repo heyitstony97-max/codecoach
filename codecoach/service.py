@@ -87,6 +87,10 @@ class ServiceConfig:
     allow_unsandboxed_code: bool = False
     bank_per_objective: int = 3
     llm_timeout_s: int = 600
+    show_notes: bool = False                 # v1.1: the course-from-your-notes screens stay hidden unless this is on
+    # v1.1: measure the model in a language the first time it writes a lesson or drill there. Off for a bare
+    # ServiceConfig() (tests build one directly); the plugin's own default, applied by from_mapping, is on.
+    auto_fit_check: bool = False
 
     @classmethod
     def from_mapping(cls, get: Callable[[str, Any], Any]) -> "ServiceConfig":
@@ -104,7 +108,9 @@ class ServiceConfig:
         return cls(default_mode=mode if mode in ("strict", "open") else "strict",
                    allow_unsandboxed_code=get("allow_unsandboxed_code", False) is True,
                    bank_per_objective=min(max(per, 1), 10),
-                   llm_timeout_s=min(max(tmo, 10), 7200))
+                   llm_timeout_s=min(max(tmo, 10), 7200),
+                   show_notes=get("show_notes", False) is True,
+                   auto_fit_check=get("auto_fit_check", True) is not False)
 
 
 def _fmt_number(x: float) -> str:
@@ -244,6 +250,19 @@ class CodeCoachService:
         self._threads.append(t)
         self._threads = [x for x in self._threads if x.is_alive()] + [t] if len(self._threads) > 50 else self._threads
         t.start()
+
+    def language_used(self, language: Any) -> None:
+        """The model has just written a lesson or a drill in this language. The first time that happens for a
+        language and a model, measure in the background how well that model writes the language, so the fit badge
+        and the weak-model warning fill in without the learner asking. Does nothing when the setting is off, when
+        there is no model, or when work cannot run in the background (it would hold up the lesson). Never raises."""
+        if not (self.background and self.llm is not None and self.cfg.auto_fit_check and isinstance(language, str)):
+            return
+        try:
+            from codecoach.fit.engine import engine_for
+            engine_for(self).ensure(language)
+        except Exception:
+            pass
 
     def wait_idle(self, timeout: float = 30.0) -> bool:
         """Join background jobs (tests, and tools that want to wait a little for an import)."""

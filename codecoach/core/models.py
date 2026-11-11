@@ -369,13 +369,21 @@ class CodeTest(_M):
 
 class CodePayload(_M):
     format: Literal["code"] = "code"
-    language: Literal["python", "c"]
+    language: str
     starter: str = ""
     visible_tests: list[CodeTest] = Field(min_length=1)
     hidden_tests: list[CodeTest] = Field(default_factory=list)
     reference_solution: NonEmpty
     time_limit_s: float = Field(default=5.0, gt=0, le=60)
     mem_mb: int = Field(default=256, ge=16, le=4096)
+
+    @field_validator("language")
+    @classmethod
+    def _known_language(cls, v: str) -> str:
+        from codecoach.lang import all_ids      # late: the language package needs nothing from here
+        if v not in all_ids():
+            raise ValueError(f"unknown language {v!r}")
+        return v
 
 
 class MathPayload(_M):

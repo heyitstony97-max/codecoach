@@ -21,10 +21,10 @@ def _sandbox(monkeypatch):
     monkeypatch.setattr(P, "sandbox_status", lambda *a, **k: "bwrap")     # skeleton tests never run code
 
 
-def test_ideas_fixed_list_both_languages():
+def test_ideas_fixed_list_every_tier_a_language():
     ids = P.ProjectEngine(make_svc()).ideas()
-    assert 4 <= len(ids) <= 6
-    assert {i["language"] for i in ids} == {"c", "python"}
+    assert 4 <= len(ids) <= 20               # v1.1: at least one idea per Tier A language
+    assert {"c", "python"} <= {i["language"] for i in ids}
     assert all(i["title"] and i["pitch"] for i in ids)
 
 
@@ -39,7 +39,7 @@ def test_create_rejects_bad_idea(idea):
 def test_create_rejects_bad_language_and_trims():
     eng, *_ = new_engine()
     with pytest.raises(ServiceError) as e:
-        eng.create("a guessing game", "rust")
+        eng.create("a guessing game", "brainfuck")
     assert e.value.status == 422
     pid = eng.create("   a guessing game   ", "c")
     assert eng.get(pid)["idea"] == "a guessing game"

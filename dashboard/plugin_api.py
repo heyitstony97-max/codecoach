@@ -357,3 +357,22 @@ def projects_step_solution(project_id: str, index: int):
 @router.post("/projects/{project_id}/steps/{index}/retry")
 def projects_step_retry(project_id: str, index: int):
     return _call(lambda s: s.project_retry(project_id, index))
+
+
+# ------------------------------------------------------------------ v1.1: languages, model fit, practice, tests
+# Each package adds its own routes and answers errors as {"detail", "code"} like _call above.
+
+from codecoach import __version__ as _VERSION  # noqa: E402
+from codecoach.fit import api as _fit_api  # noqa: E402
+from codecoach.lang import api as _lang_api  # noqa: E402
+from codecoach.practice import api as _practice_api  # noqa: E402
+
+_lang_api.register(router, get_service)
+_fit_api.register(router, get_service)
+_practice_api.register(router, get_service)
+
+
+@router.get("/meta")
+def meta():
+    """What the screen may show. `notes` is the hidden v1.0 course-from-your-notes mode (setting show_notes)."""
+    return _call(lambda s: {"version": _VERSION, "features": {"notes": bool(s.cfg.show_notes)}})

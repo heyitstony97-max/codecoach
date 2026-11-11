@@ -1,5 +1,6 @@
-// CodeCoach: the desktop half. One page at /codecoach with six views:
-// Library, Course map, Practice (with the live code box), Read (the materials, with read aloud), Timeline, Progress.
+// CodeCoach: the desktop half. One page at /codecoach. v1.1 is coding only: Build (projects), Practice and Test, with a
+// language picker and a model-fit badge. The course and notes views stay in this file and show only when GET /meta says
+// features.notes is true.
 //
 // Loaded uncompiled by Hermes Desktop: no JSX, only the three allowed imports,
 // theme variables only (never a literal color), scoped timers via ctx.
@@ -13,7 +14,8 @@ import {
   Textarea,
   Badge,
   EmptyState,
-  Codicon
+  Codicon,
+  writeClipboardText
 } from '@hermes/plugin-sdk'
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react'
 import { jsx, jsxs } from 'react/jsx-runtime'
@@ -2108,7 +2110,7 @@ function PracticeBody({ courseId, objectiveId, token, onProgressChange, onRead, 
         { style: S.muted },
         'Nothing is due. Pick a topic on the ',
         h('button', { type: 'button', onClick: () => bus.emit('topic', null), 'data-testid': 'caught-up-map', style: { all: 'unset', cursor: 'pointer', color: C.accent, textDecoration: 'underline' } }, 'Course page'),
-        ' to practise it now, or come back later.'
+        ' to practice it now, or come back later.'
       )
     )
   if (step === 'done') return h(EmptyState, { title: 'Mistakes review finished', description: next.message || 'Come back when reviews are due, or open the map to pick an objective.' })
@@ -4187,10 +4189,848 @@ function LessonGate({ lesson, courseId, onStart, onRead, onLearn }) {
 // ---------------------------------------------------------------------------
 
 const PROJ_POLL_MS = 3000
+const FIT_LOOK_MS = 20000
 const PROJ_WAIT = 'Planning your project. A local model can take a couple of minutes; you can leave this page and come back.'
 const PROJ_NO_SANDBOX = 'CodeCoach runs your code in a sandbox, and the sandbox is not installed on this computer. Install bubblewrap (on Ubuntu: sudo apt install bubblewrap), restart CodeCoach, then come back. Nothing else is needed.'
-const LANG_NAME = { c: 'C', python: 'Python' }
-const LANG_EXT = { c: 'c', python: 'py' }
+
+// ---------------------------------------------------------------------------
+// Languages and model fit (V11-CONTRACT.md sections 3, 5 and 7)
+// GET /languages says which toolchains were proven in the sandbox; GET /fit says how well the model writes each one.
+// ---------------------------------------------------------------------------
+
+const LEGACY_LANGS = [
+  { id: 'c', name: 'C', status: 'ready', version: null, reason: null, hello_ms: null, live_run: false, ext: '.c', tier: 'A' },
+  { id: 'python', name: 'Python', status: 'ready', version: null, reason: null, hello_ms: null, live_run: false, ext: '.py', tier: 'A' }
+]
+const RESTART_LINE = 'Restart Hermes to finish updating CodeCoach.'
+const FIT_TASKS = [
+  ['sum2', 'Add two numbers'],
+  ['count_vowels', 'Count the vowels'],
+  ['fizzbuzz', 'FizzBuzz'],
+  ['reverse_words', 'Reverse the words'],
+  ['max_of_list', 'Largest in a list']
+]
+const FALLBACK_EXT = { c: 'c', python: 'py' }
+
+const isNotFound = e => !!e && (e.statusCode === 404 || /^404\b/.test(String(e.message || '')))
+const langOf = (lx, id) => (lx && lx.langs.find(l => l.id === id)) || null
+const langLabel = (lx, id) => (langOf(lx, id) || {}).name || id
+const extOf = (lx, id) => {
+  const l = langOf(lx, id)
+  const e = l && l.ext ? String(l.ext).replace(/^\./, '') : ''
+  return e || FALLBACK_EXT[id] || 'txt'
+}
+
+// What the badge says for one Fit record (or none).
+function fitInfo(rec) {
+  if (!rec || rec.status === 'none') return { key: 'none', label: 'Not checked', tone: null }
+  if (rec.status === 'running') return { key: 'running', label: `Checking ${rec.done_tasks || 0} of ${rec.total || 5}`, tone: 'accent' }
+  if (rec.status === 'error' || rec.verdict === 'unknown') return { key: 'error', label: 'Not checked', tone: null }
+  const n = `${rec.passed}/${rec.total}`
+  const stale = !!rec.stale
+  if (rec.verdict === 'good') return { key: 'good', label: `Good fit ${n}`, tone: 'good', stale }
+  if (rec.verdict === 'mixed') return { key: 'mixed', label: `Mixed ${n}`, tone: 'warn', stale }
+  return { key: 'poor', label: `Weak ${n}`, tone: 'bad', stale }
+}
+const toneColor = t => (t === 'good' ? C.green : t === 'bad' ? C.red : t === 'warn' ? C.yellow : t === 'accent' ? C.accent : C.t2)
+const modelName = m => (m && m.model ? String(m.model) : '')
+const whenText = iso => {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+function useLangs() {
+  const [st, setSt] = useState({ loading: true, error: null, legacy: false, langs: [], sandbox: null })
+  const [fit, setFit] = useState({ model: null, languages: {}, switch: null, error: null })
+  const [pickedRaw, setPickedRaw] = useState(() => CTX.storage.get('lang:picked', null))
+  const [looking, setLooking] = useState(false)
+  const [lookErr, setLookErr] = useState(null)
+  const alive = useRef(true)
+  const legacyRef = useRef(false)
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+    }
+  }, [])
+
+  const loadFit = useCallback(async () => {
+    if (legacyRef.current) return
+    try {
+      const r = await api('/fit')
+      if (alive.current) setFit(f => ({ model: r.model || null, languages: { ...(r.languages || {}) }, switch: r.switch || null, error: null }))
+    } catch (e) {
+      if (alive.current) setFit(f => ({ ...f, error: isNotFound(e) ? null : `Could not read the model fit: ${errText(e)}` }))
+    }
+  }, [])
+  const loadLangs = useCallback(async () => {
+    setSt(s => ({ ...s, loading: true, error: null }))
+    try {
+      const r = await api('/languages')
+      if (!alive.current) return
+      legacyRef.current = false
+      setSt({ loading: false, error: null, legacy: false, langs: r.languages || [], sandbox: r.sandbox || null })
+      loadFit()
+    } catch (e) {
+      if (!alive.current) return
+      if (isNotFound(e)) {
+        legacyRef.current = true
+        setSt({ loading: false, error: null, legacy: true, langs: LEGACY_LANGS, sandbox: null })
+      } else setSt(s => ({ ...s, loading: false, error: `Could not load your languages: ${errText(e)}` }))
+    }
+  }, [loadFit])
+  useEffect(() => {
+    loadLangs()
+  }, [loadLangs])
+
+  // While a check runs, look at it every 3 seconds. The server does the work; this only looks.
+  const runningKey = Object.keys(fit.languages).filter(k => fit.languages[k] && fit.languages[k].status === 'running').sort().join(',')
+  useEffect(() => {
+    if (!runningKey) return undefined
+    const cancel = CTX.setTimeout(async () => {
+      for (const lang of runningKey.split(',')) {
+        try {
+          const r = await api(`/fit/${encodeURIComponent(lang)}`)
+          if (alive.current) setFit(f => ({ ...f, languages: { ...f.languages, [lang]: r } }))
+        } catch (e) {
+          if (alive.current) setFit(f => ({ ...f, languages: { ...f.languages, [lang]: { language: lang, status: 'error', verdict: 'unknown', passed: 0, total: 5, done_tasks: 0, tasks: [], model: f.model, advice: `CodeCoach could not read how the check is going: ${errText(e)}` } } }))
+        }
+      }
+    }, PROJ_POLL_MS)
+    return cancel
+  }, [runningKey, fit.languages])
+
+  // CodeCoach may start a check on its own the first time the model writes a lesson or a drill in a language, so
+  // look again every so often while none is known to be running. Each answer sets `fit` and so arms the next look.
+  useEffect(() => {
+    if (st.loading || st.legacy || runningKey) return undefined
+    return CTX.setTimeout(loadFit, FIT_LOOK_MS)
+  }, [st.loading, st.legacy, runningKey, fit, loadFit])
+
+  const ready = st.langs.filter(l => l.status === 'ready')
+  const notReady = st.langs.filter(l => l.status !== 'ready')
+  const picked = ready.some(l => l.id === pickedRaw) ? pickedRaw : ready.length ? ready[0].id : null
+  const setPicked = id => {
+    setPickedRaw(id)
+    CTX.storage.set('lang:picked', id)
+  }
+  const startCheck = async id => {
+    try {
+      await api(`/fit/${encodeURIComponent(id)}`, { method: 'POST' })
+    } catch (e) {
+      if (errCode(e) !== 'fit_running') return errText(e)
+    }
+    setFit(f => ({ ...f, languages: { ...f.languages, [id]: { language: id, status: 'running', verdict: 'unknown', passed: 0, total: 5, done_tasks: 0, tasks: [], model: f.model, median_ms: null, measured_at: null, stale: false, advice: '' } } }))
+    return null
+  }
+  const refresh = async () => {
+    setLooking(true)
+    setLookErr(null)
+    try {
+      const r = await api('/languages/refresh', { method: 'POST' })
+      if (!alive.current) return
+      setSt({ loading: false, error: null, legacy: false, langs: r.languages || [], sandbox: r.sandbox || null })
+      loadFit()
+    } catch (e) {
+      if (alive.current) setLookErr(`Could not look again: ${errText(e)}`)
+    } finally {
+      if (alive.current) setLooking(false)
+    }
+  }
+  return { ...st, ready, notReady, picked, setPicked, fit, fitOf: id => fit.languages[id] || null, startCheck, refresh, looking, lookErr, reload: loadLangs }
+}
+
+function CopyButton({ text, label }) {
+  const [state, setState] = useState(null)
+  const cancel = useRef(null)
+  useEffect(() => () => cancel.current && cancel.current(), [])
+  const copy = async () => {
+    let ok = false
+    try {
+      await writeClipboardText(text)
+      ok = true
+    } catch (_e) {
+      ok = false
+    }
+    setState(ok ? 'ok' : 'fail')
+    if (cancel.current) cancel.current()
+    cancel.current = CTX.setTimeout(() => setState(null), 2500)
+  }
+  return h(
+    'span',
+    { style: { ...S.row, flex: 'none' } },
+    h(Button, { size: 'sm', variant: 'outline', onClick: copy, 'aria-label': label || 'Copy this command', 'data-testid': 'fit-copy' }, h(Codicon, { name: state === 'ok' ? 'check' : 'copy' }), state === 'ok' ? 'Copied' : 'Copy'),
+    state === 'fail' ? h('span', { style: { ...S.cap, color: C.red }, role: 'alert' }, 'Could not copy. Select the command and copy it by hand.') : null
+  )
+}
+
+// The two commands that point CodeCoach at another model, each with a copy button.
+function SwitchBlock({ lx }) {
+  const sw = lx.fit.switch
+  if (!sw || !(sw.commands || []).length) return null
+  return h(
+    'div',
+    { style: { display: 'flex', flexDirection: 'column', gap: SP.sm }, 'data-testid': 'fit-switch' },
+    h('div', { style: { maxWidth: MAX_READ }, 'data-testid': 'fit-switch-desktop' }, 'In Hermes Desktop: open Settings, then Models, then Auxiliary models, and pick another model in the CodeCoach tutor row.'),
+    h('div', { style: S.cap }, 'Or in a terminal:'),
+    sw.commands.map((c, i) =>
+      h(
+        'div',
+        { key: i, style: { ...S.row, alignItems: 'flex-start' }, 'data-testid': 'fit-switch-command' },
+        h('code', { style: { flex: 1, minWidth: 0, fontFamily: MONO, fontSize: 13, lineHeight: '20px', background: tint(C.text, 6), borderRadius: 6, padding: `${SP.xs}px ${SP.sm}px`, overflowWrap: 'anywhere' } }, c),
+        h(CopyButton, { text: c, label: `Copy command ${i + 1}` })
+      )
+    ),
+    sw.note ? h('div', { style: S.cap }, sw.note) : null
+  )
+}
+
+function FitBadge({ info, open, onToggle, name, id, plain }) {
+  const col = toneColor(info.tone)
+  const kids = [info.key === 'running' ? h(Codicon, { key: 'i', name: 'loading', spinning: true }) : null, info.label]
+  const style = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 999, fontSize: FS.cap, lineHeight: '16px', whiteSpace: 'nowrap', color: col, background: tint(col, 14), border: `1px solid ${tint(col, 30)}`, font: 'inherit' }
+  if (plain) return h('span', { style, 'data-testid': 'fit-badge', 'data-lang': id, 'data-fit-state': info.key }, ...kids)
+  return h('button', { type: 'button', onClick: onToggle, 'aria-expanded': open, 'aria-label': `Model fit for ${name}: ${info.label}`, title: info.stale ? 'Measured on a different model than the one CodeCoach uses now' : 'Show how well this model writes this language', 'data-testid': 'fit-badge', 'data-lang': id, 'data-fit-state': info.key, style: { ...style, cursor: 'pointer' } }, ...kids, h(Codicon, { name: open ? 'chevron-down' : 'chevron-right' }))
+}
+
+function FitPanel({ lx, id, forceSwitch }) {
+  const rec = lx.fitOf(id)
+  const info = fitInfo(rec)
+  const name = langLabel(lx, id)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const check = async () => {
+    setBusy(true)
+    setErr(null)
+    const e = await lx.startCheck(id)
+    setBusy(false)
+    if (e) setErr(e)
+  }
+  const running = info.key === 'running'
+  const model = rec ? modelName(rec.model) : ''
+  const now = modelName(lx.fit.model)
+  const hasRecord = info.key !== 'none'
+  const stale = !!(rec && rec.stale)
+  const showSwitch = forceSwitch || info.key === 'mixed' || info.key === 'poor' || stale
+  const done = rec && rec.status === 'done'
+  let rows = rec && rec.tasks ? rec.tasks.slice() : []
+  if (running) for (const [tid, title] of FIT_TASKS) if (!rows.some(t => t.id === tid)) rows.push({ id: tid, title, ok: null, reason: null })
+  return h(
+    'div',
+    { style: { ...S.card, display: 'flex', flexDirection: 'column', gap: SP.md, minWidth: 0 }, 'data-testid': 'fit-panel', 'data-lang': id, 'data-fit-state': info.key },
+    h('div', { style: { ...S.row, justifyContent: 'space-between', flexWrap: 'wrap' } }, h('h3', { style: { ...S.h2, fontSize: FS.body } }, `How well this model writes ${name}`), h(FitBadge, { info, name, id, plain: true })),
+    running ? h('div', { style: S.muted, role: 'status' }, `Checking: ${rec.done_tasks || 0} of ${rec.total || 5} warm-ups done. Each one asks the model for a small ${name} program and runs it in the sandbox. This page updates by itself.`) : null,
+    !hasRecord ? h('div', { style: { ...S.muted, maxWidth: MAX_READ } }, `CodeCoach has not checked ${now ? `${now} ` : 'the current model '}on ${name} yet. A check asks the model for five small ${name} programs and runs each one in the sandbox. Your own code is never sent.`) : null,
+    rows.length
+      ? h(
+          'ul',
+          { style: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: SP.xs }, 'data-testid': 'fit-tasks' },
+          rows.map(t =>
+            h(
+              'li',
+              { key: t.id, style: { ...S.row, alignItems: 'flex-start' }, 'data-testid': 'fit-task', 'data-task': t.id, 'data-ok': t.ok === true ? '1' : t.ok === false ? '0' : 'wait' },
+              h(Codicon, { name: t.ok === true ? 'pass-filled' : t.ok === false ? 'error' : 'circle-outline', style: { color: t.ok === true ? C.green : t.ok === false ? C.red : C.t4, flex: 'none', marginTop: 2 } }),
+              h('span', { style: { minWidth: 0 } }, h('span', { style: { fontWeight: 600 } }, t.title), ' ', h('span', { style: { color: C.t2 } }, t.ok === true ? 'passed' : t.ok === false ? `failed. ${t.reason || ''}` : 'waiting'))
+            )
+          )
+        )
+      : null,
+    done && rec.model ? h('div', { style: S.muted, 'data-testid': 'fit-model' }, `Model: ${model}${rec.model.provider ? ` (${rec.model.provider})` : ''}${rec.measured_at && whenText(rec.measured_at) ? `. Measured ${whenText(rec.measured_at)}.` : ''}`) : null,
+    stale ? h(Banner, { tone: 'warn' }, `This result was measured on ${model || 'an earlier model'}${now ? `, and CodeCoach now uses ${now}` : ''}. Check again to measure the current model.`) : null,
+    rec && rec.advice ? (info.key === 'error' ? h(Banner, { tone: 'warn' }, rec.advice) : h('div', { style: { maxWidth: MAX_READ }, 'data-testid': 'fit-advice' }, rec.advice)) : null,
+    err ? h(Banner, { tone: 'bad' }, err) : null,
+    lx.legacy ? null : h('div', { style: S.row }, h(Button, { variant: 'outline', size: 'sm', onClick: check, disabled: busy || running, 'data-testid': 'fit-check' }, h(Codicon, { name: busy || running ? 'loading' : 'refresh', spinning: busy || running }), hasRecord ? 'Check again' : 'Check now')),
+    showSwitch ? h(SwitchBlock, { lx }) : null
+  )
+}
+
+// "Rust 1.99.1, proven in the sandbox on this machine. Model fit 4/5 on <model>."
+function ProofLine({ lx, id }) {
+  const l = langOf(lx, id)
+  if (!l || lx.legacy || l.status !== 'ready') return null
+  const rec = lx.fitOf(id)
+  const info = fitInfo(rec)
+  const fitPart = ['good', 'mixed', 'poor'].includes(info.key) && rec.model ? ` Model fit ${rec.passed}/${rec.total} on ${modelName(rec.model)}.` : ''
+  return h('div', { style: { ...S.cap, color: C.t3 }, 'data-testid': 'proof-line' }, `${l.name}${l.version ? ` ${l.version}` : ''}, proven in the sandbox on this machine.${fitPart}`)
+}
+
+function LanguagePicker({ lx }) {
+  const [openFit, setOpenFit] = useState(null)
+  const [showMissing, setShowMissing] = useState(false)
+  return h(
+    'section',
+    { style: { display: 'flex', flexDirection: 'column', gap: SP.md, minWidth: 0 }, 'data-testid': 'language-picker', 'aria-label': 'Language' },
+    h(
+      'div',
+      { style: { ...S.row, justifyContent: 'space-between', flexWrap: 'wrap' } },
+      h('h3', { style: S.h3 }, 'Language'),
+      lx.legacy ? null : h(Button, { size: 'sm', variant: 'ghost', onClick: lx.refresh, disabled: lx.looking, title: 'Check this computer again for languages you just installed', 'data-testid': 'lang-look-again' }, h(Codicon, { name: lx.looking ? 'loading' : 'refresh', spinning: lx.looking }), lx.looking ? 'Looking' : 'Look again')
+    ),
+    lx.legacy ? h('div', { style: { ...S.row, color: C.t2 }, 'data-testid': 'legacy-line' }, h(Codicon, { name: 'info' }), RESTART_LINE) : null,
+    lx.error ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } }, h(Banner, { tone: 'bad' }, lx.error), h('div', null, h(Button, { onClick: lx.reload }, 'Try again'))) : null,
+    lx.loading && !lx.langs.length && !lx.error ? h(Spinner, { text: 'Looking for languages on this computer' }) : null,
+    lx.lookErr ? h(Banner, { tone: 'bad' }, lx.lookErr) : null,
+    lx.fit.error ? h('div', { style: S.muted, 'data-testid': 'fit-error' }, lx.fit.error) : null,
+    lx.ready.length
+      ? h(
+          'div',
+          { role: 'radiogroup', 'aria-label': 'Language', style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: SP.sm }, 'data-testid': 'lang-ready' },
+          lx.ready.flatMap(l => {
+            const sel = lx.picked === l.id
+            const info = lx.legacy ? fitInfo(null) : fitInfo(lx.fitOf(l.id))
+            const open = openFit === l.id
+            const cells = [
+              h(
+                'div',
+                { key: l.id, style: { display: 'flex', alignItems: 'center', gap: SP.sm, border: `1px solid ${sel ? C.accent : C.line}`, background: sel ? tint(C.accent, 10) : 'transparent', borderRadius: 8, padding: `${SP.xs}px ${SP.sm}px`, minWidth: 0 }, 'data-testid': 'lang-row', 'data-lang': l.id },
+                h(
+                  Button,
+                  { variant: 'ghost', size: 'sm', role: 'radio', 'aria-checked': sel, onClick: () => lx.setPicked(l.id), 'data-testid': `project-lang-${l.id}`, style: { flex: 1, minWidth: 0, justifyContent: 'flex-start', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden' } },
+                  h(Codicon, { name: sel ? 'pass-filled' : 'circle-outline', style: { color: sel ? C.accent : C.t3, flex: 'none' } }),
+                  h('span', { style: { fontWeight: 600 } }, l.name),
+                  l.version ? h('span', { style: { ...S.cap, overflow: 'hidden', textOverflow: 'ellipsis' } }, l.version) : null
+                ),
+                h(FitBadge, { info, open, name: l.name, id: l.id, plain: lx.legacy, onToggle: () => setOpenFit(open ? null : l.id) })
+              )
+            ]
+            if (open && !lx.legacy) cells.push(h('div', { key: `${l.id}:panel`, style: { gridColumn: '1 / -1', minWidth: 0 } }, h(FitPanel, { lx, id: l.id })))
+            return cells
+          })
+        )
+      : null,
+    !lx.loading && !lx.error && !lx.ready.length ? h(Banner, { tone: 'warn' }, 'No language is set up on this computer yet. Install one, then press Look again.') : null,
+    lx.notReady.length
+      ? h(
+          'div',
+          { style: { display: 'flex', flexDirection: 'column', gap: SP.sm }, 'data-testid': 'lang-missing' },
+          h(Button, { size: 'sm', variant: 'ghost', onClick: () => setShowMissing(o => !o), 'aria-expanded': showMissing, 'data-testid': 'lang-missing-toggle', style: { alignSelf: 'flex-start' } }, h(Codicon, { name: showMissing ? 'chevron-down' : 'chevron-right' }), `Not set up on this machine (${lx.notReady.length})`),
+          showMissing
+            ? h(
+                'ul',
+                { style: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: SP.xs } },
+                lx.notReady.map(l => h('li', { key: l.id, style: { ...S.row, alignItems: 'flex-start' }, 'data-testid': 'lang-missing-row', 'data-lang': l.id, 'data-lang-status': l.status }, h(Codicon, { name: l.status === 'failed' ? 'warning' : 'circle-outline', style: { color: l.status === 'failed' ? C.yellow : C.t3, flex: 'none', marginTop: 2 } }), h('span', { style: { minWidth: 0 } }, (l.reason && l.reason.indexOf(l.name) === 0 ? null : h('span', { style: { fontWeight: 600, marginRight: SP.xs } }, l.name)), h('span', { style: { color: C.t2 } }, l.reason || 'Not found on this computer.'))))
+              )
+            : null
+        )
+      : null
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Practice and Test (V11-CONTRACT.md sections 6 and 7)
+// A drill is a short program: the learner predicts what it prints, and the answer is its real output from the
+// sandbox. A test is a fixed set of drills with no feedback until Finish.
+// ---------------------------------------------------------------------------
+
+const DRILL_WAIT = 'Building a drill. CodeCoach asks the model for a short program, then runs it in the sandbox to get its real output. A local model can take a minute or two. This page looks again every 3 seconds and updates by itself.'
+const TEST_WAIT = 'Building your test. Each question is a short program that CodeCoach runs in the sandbox to get its real output. A local model can take a few minutes. This page looks again every 3 seconds and updates by itself.'
+const OLD_BACKEND = 'This part of CodeCoach is not in the running backend yet. Restart Hermes to finish updating CodeCoach.'
+
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many || one + 's'}`
+const encode = encodeURIComponent
+
+function ViewHead({ title, lead }) {
+  return h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.xs } }, h('h2', { style: { ...S.h2, fontSize: FS.big, lineHeight: '32px' } }, title), lead ? h('div', { style: { ...S.muted, maxWidth: MAX_READ } }, lead) : null)
+}
+
+// The program a drill shows: read-only, in the same code font as the editor, plus its input if it has any.
+function ProgramView({ code, stdin }) {
+  return h(
+    'div',
+    { style: { display: 'flex', flexDirection: 'column', gap: SP.sm }, 'data-testid': 'drill-program' },
+    h('pre', { style: { ...mono(), fontSize: 13, lineHeight: '19px', padding: `${SP.sm}px ${SP.md}px`, whiteSpace: 'pre', overflowX: 'auto' }, tabIndex: 0, 'aria-label': 'Program', 'data-testid': 'drill-code' }, code),
+    stdin ? h('div', null, h('div', { style: S.cap }, 'The program reads this input'), h('pre', { style: mono(), 'data-testid': 'drill-stdin' }, stdin)) : null
+  )
+}
+
+// Looks at one drill; while it is being built it looks again every 3 seconds.
+function useDrill(drillId) {
+  const [st, setSt] = useState({ data: null, error: null })
+  const alive = useRef(true)
+  const timer = useRef(null)
+  const load = useCallback(async () => {
+    if (!drillId) return
+    try {
+      const d = await api(`/practice/drills/${encode(drillId)}`)
+      if (alive.current) setSt({ data: d, error: null })
+    } catch (e) {
+      if (alive.current) setSt(s => ({ ...s, error: errText(e) }))
+    }
+  }, [drillId])
+  useEffect(() => {
+    alive.current = true
+    setSt({ data: null, error: null })
+    load()
+    return () => {
+      alive.current = false
+      if (timer.current) timer.current()
+    }
+  }, [load])
+  const building = !!st.data && st.data.status === 'building' && !st.error
+  useEffect(() => {
+    if (!building) return undefined
+    timer.current = CTX.setTimeout(load, PROJ_POLL_MS)
+    return () => timer.current && timer.current()
+  }, [building, st.data, load])
+  return { ...st, reload: load }
+}
+
+// The answer box: a plain textarea in the code font, sized to the number of lines the program prints.
+function PredictionBox({ value, onChange, disabled, lines, onSubmit, testid, label }) {
+  return h(Textarea, {
+    value,
+    rows: Math.min(10, Math.max(3, (lines || 3) + 1)),
+    disabled,
+    spellCheck: false,
+    wrap: 'off',
+    'aria-label': label || 'What the program prints',
+    'data-testid': testid || 'drill-answer',
+    onChange: e => onChange(e.target.value),
+    onKeyDown: e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && onSubmit) {
+        e.preventDefault()
+        onSubmit()
+      }
+    },
+    style: { fontFamily: MONO, fontSize: 13, lineHeight: '19px', whiteSpace: 'pre', overflow: 'auto', resize: 'vertical' }
+  })
+}
+
+// Expected against yours, one row per line. A row that differs also says so in words, not only in colour.
+function LineTable({ lines }) {
+  return h(
+    'div',
+    { style: { display: 'flex', flexDirection: 'column', gap: SP.xs }, 'data-testid': 'drill-lines', role: 'table', 'aria-label': 'Your answer against the real output' },
+    h('div', { role: 'row', style: { display: 'grid', gridTemplateColumns: '40px minmax(0,1fr) minmax(0,1fr) 84px', gap: SP.sm, ...S.cap } }, h('span', { role: 'columnheader' }, 'Line'), h('span', { role: 'columnheader' }, 'Real output'), h('span', { role: 'columnheader' }, 'Your answer'), h('span', { role: 'columnheader' }, 'Result')),
+    lines.map(l => {
+      const col = l.ok ? C.green : C.red
+      return h(
+        'div',
+        { key: l.n, role: 'row', 'data-testid': 'drill-line', 'data-line': l.n, 'data-line-ok': l.ok ? '1' : '0', style: { display: 'grid', gridTemplateColumns: '40px minmax(0,1fr) minmax(0,1fr) 84px', gap: SP.sm, alignItems: 'start', padding: `${SP.xs}px ${SP.sm}px`, borderRadius: 6, border: `1px solid ${l.ok ? C.line : tint(col, 45)}`, background: l.ok ? 'transparent' : tint(col, 8) } },
+        h('span', { role: 'cell', style: { ...S.cap, paddingTop: 2 } }, l.n),
+        h('code', { role: 'cell', style: { fontFamily: MONO, fontSize: 13, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }, 'data-testid': 'drill-line-expected' }, l.expected === '' ? '(empty)' : l.expected),
+        h('code', { role: 'cell', style: { fontFamily: MONO, fontSize: 13, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }, 'data-testid': 'drill-line-got' }, l.got === '' ? '(empty)' : l.got),
+        h('span', { role: 'cell', style: { ...S.row, gap: 4, color: col, fontSize: FS.cap, lineHeight: '20px' } }, h(Codicon, { name: l.ok ? 'pass-filled' : 'error' }), l.ok ? 'Matches' : 'Differs')
+      )
+    })
+  )
+}
+
+// What the learner sees after Check: verdict, line by line, the real output, the tutor's words.
+function DrillResult({ res, onNext, nextBusy, nextErr, onBack }) {
+  const col = res.correct ? C.green : C.red
+  const explanation = res.explanation || []
+  return h(
+    'div',
+    { style: { display: 'flex', flexDirection: 'column', gap: SP.lg }, 'data-testid': 'drill-result', 'data-correct': res.correct ? '1' : '0' },
+    h('div', { style: { ...S.card, ...S.row, gap: SP.md, borderColor: tint(col, 45), background: tint(col, 8) }, role: 'status' }, h(Codicon, { name: res.correct ? 'pass-filled' : 'error', style: { color: col, fontSize: FS.title } }), h('div', null, h('div', { style: { fontWeight: 600 } }, res.correct ? 'Correct. Your answer matches the real output.' : 'Not quite. The lines marked Differs are where your answer and the real output part ways.'))),
+    h('section', { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } }, h('h3', { style: S.h3 }, 'Line by line'), h(LineTable, { lines: res.lines || [] })),
+    h('section', { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } }, h('h3', { style: S.h3 }, "Ran in CodeCoach's sandbox"), h('pre', { style: { ...mono(), fontSize: 13, lineHeight: '19px' }, 'data-testid': 'drill-real-output' }, shown(res.expected_stdout))),
+    explanation.length
+      ? h('section', { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } }, h('h3', { style: S.h3 }, "Tutor's explanation"), h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.sm, maxWidth: MAX_READ, fontSize: FS.lead, lineHeight: '26px' }, 'data-testid': 'drill-explanation' }, explanation.map((x, k) => h('p', { key: k, style: { margin: 0 } }, x))))
+      : null,
+    nextErr ? h(Banner, { tone: 'bad' }, nextErr) : null,
+    h('div', { style: { ...S.row, flexWrap: 'wrap' } }, h(Button, { onClick: onNext, disabled: nextBusy, 'data-testid': 'drill-next' }, h(Codicon, { name: nextBusy ? 'loading' : 'arrow-right', spinning: nextBusy }), nextBusy ? 'Getting the next drill' : 'Next drill'), h(Button, { variant: 'ghost', onClick: onBack, disabled: nextBusy, 'data-testid': 'drill-topics' }, 'All topics'))
+  )
+}
+
+function DrillScreen({ drillId, title, onNext, onBack, nextBusy, nextErr }) {
+  const dr = useDrill(drillId)
+  const [text, setText] = useState('')
+  const [res, setRes] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const d = dr.data
+  const check = async () => {
+    if (busy || res || !text.trim()) return
+    setBusy(true)
+    setErr(null)
+    try {
+      setRes(await api(`/practice/drills/${encode(drillId)}/answer`, { method: 'POST', body: { prediction: text } }))
+    } catch (e) {
+      setErr(errText(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const back = h(Button, { size: 'sm', variant: 'ghost', onClick: onBack, 'data-testid': 'drill-back' }, h(Codicon, { name: 'arrow-left' }), 'All topics')
+  const head = h('div', { style: { ...S.row, justifyContent: 'space-between', flexWrap: 'wrap' } }, back, h('span', { style: S.cap }, title))
+  if (dr.error && !d) return h(Wrap, { max: 820, gap: SP.lg, 'data-testid': 'drill-screen' }, head, h(Banner, { tone: 'bad' }, `Could not open this drill: ${dr.error}`), h('div', null, h(Button, { onClick: dr.reload }, 'Try again')))
+  if (!d) return h(Wrap, { max: 820, gap: SP.lg, 'data-testid': 'drill-screen' }, head, h(Spinner, { text: 'Opening the drill' }))
+  if (d.status === 'building')
+    return h(
+      Wrap,
+      { max: 820, gap: SP.lg, 'data-testid': 'drill-screen', 'data-drill-status': 'building' },
+      head,
+      h('div', { style: { ...S.card, display: 'flex', gap: SP.md, alignItems: 'flex-start' }, role: 'status', 'data-testid': 'drill-building' }, h(Codicon, { name: 'loading', spinning: true }), h('div', { style: { maxWidth: MAX_READ } }, DRILL_WAIT)),
+      dr.error ? h(Banner, { tone: 'warn' }, `The last look failed: ${dr.error}`) : null
+    )
+  if (d.status === 'unavailable')
+    return h(
+      Wrap,
+      { max: 820, gap: SP.lg, 'data-testid': 'drill-screen', 'data-drill-status': 'unavailable' },
+      head,
+      h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.md }, 'data-testid': 'drill-unavailable' }, h(Banner, { tone: 'warn' }, d.reason || 'CodeCoach could not build a drill for this topic.'), nextErr ? h(Banner, { tone: 'bad' }, nextErr) : null, h('div', null, h(Button, { onClick: onNext, disabled: nextBusy, 'data-testid': 'drill-retry' }, h(Codicon, { name: nextBusy ? 'loading' : 'refresh', spinning: nextBusy }), nextBusy ? 'Trying again' : 'Try another drill')))
+    )
+  return h(
+    Wrap,
+    { max: 820, gap: SP.xl, 'data-testid': 'drill-screen', 'data-drill-status': 'ready' },
+    head,
+    h(ProgramView, { code: d.code, stdin: d.stdin }),
+    h(
+      'section',
+      { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } },
+      h('h3', { style: S.h3 }, 'Type exactly what this program prints'),
+      h(PredictionBox, { value: text, onChange: setText, disabled: !!res || busy, lines: d.line_count, onSubmit: check }),
+      h('div', { style: S.muted, 'data-testid': 'drill-hint' }, `It prints ${plural(d.line_count, 'line')}. Spaces at the end of a line do not matter. Press Ctrl+Enter to check.`),
+      err ? h(Banner, { tone: 'bad' }, err) : null,
+      res ? null : h('div', null, h(Button, { onClick: check, disabled: busy || !text.trim(), 'data-testid': 'drill-check' }, h(Codicon, { name: busy ? 'loading' : 'check', spinning: busy }), busy ? 'Checking' : 'Check'))
+    ),
+    res ? h(DrillResult, { res, onNext, nextBusy, nextErr, onBack }) : null
+  )
+}
+
+// Loads a list route; a 404 means the running backend is older than this page.
+function useRoute(path, deps) {
+  return useAsync(async () => {
+    if (!path) return null
+    try {
+      return await api(path)
+    } catch (e) {
+      if (isNotFound(e)) return { __old: true }
+      throw e
+    }
+  }, deps)
+}
+
+function CodePracticeView({ lx, jump, onJumpDone }) {
+  const lang = lx.picked
+  const [topic, setTopic] = useState(null) // { id, title } of the drill on screen
+  const [drillId, setDrillId] = useState(null)
+  const [starting, setStarting] = useState(null)
+  const [err, setErr] = useState(null)
+  const st = useRoute(lang ? `/practice?language=${encode(lang)}` : null, [lang])
+  const alive = useRef(true)
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+    }
+  }, [])
+  useEffect(() => {
+    setTopic(null)
+    setDrillId(null)
+    setErr(null)
+  }, [lang])
+  const start = async t => {
+    if (starting || !lang) return
+    setStarting(t.id)
+    setErr(null)
+    try {
+      const r = await api('/practice/next', { method: 'POST', body: { language: lang, topic: t.id } })
+      if (!alive.current) return
+      setTopic(t)
+      setDrillId(r.drill_id)
+    } catch (e) {
+      if (alive.current) setErr(errText(e))
+    } finally {
+      if (alive.current) setStarting(null)
+    }
+  }
+  const data = st.data && !st.data.__old ? st.data : null
+  // "Practice this" from a finished test: open that topic as soon as the topic list is here.
+  useEffect(() => {
+    if (!jump || !data || lang !== jump.lang) return
+    const t = (data.topics || []).find(x => x.id === jump.topic)
+    onJumpDone && onJumpDone()
+    if (t) start(t)
+  }, [jump, data, lang])
+  const back = () => {
+    setDrillId(null)
+    setTopic(null)
+    st.reload()
+  }
+  if (drillId)
+    return h(
+      Wrap,
+      { max: 820, gap: SP.xl, 'data-testid': 'view-practice' },
+      h(DrillScreen, { key: drillId, drillId, title: `${langLabel(lx, lang)}: ${topic ? topic.title : ''}`, onBack: back, onNext: () => start(topic), nextBusy: !!starting, nextErr: err }),
+      h(ProofLine, { lx, id: lang })
+    )
+  return h(
+    Wrap,
+    { max: 820, gap: SP.xl, 'data-testid': 'view-practice' },
+    h(ViewHead, { title: 'Practice', lead: 'Read a short program and type exactly what it prints. CodeCoach then runs it in the sandbox and shows you the real output, line by line.' }),
+    h(LanguagePicker, { lx }),
+    err ? h(Banner, { tone: 'bad' }, err) : null,
+    !lang && !lx.loading ? null : null,
+    lang
+      ? h(
+          'section',
+          { style: { display: 'flex', flexDirection: 'column', gap: SP.sm }, 'data-testid': 'practice-topics' },
+          h('h3', { style: S.h3 }, `Topics in ${langLabel(lx, lang)}`),
+          st.loading && !st.data ? h(Spinner, { text: 'Loading the topics' }) : null,
+          st.error ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } }, h(Banner, { tone: 'bad' }, `Could not load the topics: ${st.error}`), h('div', null, h(Button, { onClick: st.reload }, 'Try again'))) : null,
+          st.data && st.data.__old ? h(Banner, { tone: 'warn' }, OLD_BACKEND) : null,
+          data
+            ? (data.topics || []).map(t =>
+                h(
+                  'div',
+                  { key: t.id, className: 'ath-row', 'data-testid': 'practice-topic', 'data-topic': t.id, style: { ...S.row, border: `1px solid ${C.line}`, borderRadius: 8, padding: `${SP.sm}px ${SP.md}px`, gap: SP.md, flexWrap: 'wrap' } },
+                  h('span', { style: { fontWeight: 600, flex: '1 1 160px', minWidth: 0 } }, t.title),
+                  h('span', { style: { ...S.muted, flex: '0 1 auto' }, 'data-testid': 'practice-topic-score' }, t.seen ? `Tried ${t.seen}, correct ${t.correct}` : 'Not tried yet'),
+                  h(Button, { size: 'sm', variant: 'outline', onClick: () => start(t), disabled: !!starting, 'aria-label': `Practice ${t.title}`, 'data-testid': 'practice-start' }, h(Codicon, { name: starting === t.id ? 'loading' : 'play', spinning: starting === t.id }), starting === t.id ? 'Starting' : 'Practice')
+                )
+              )
+            : null
+        )
+      : null,
+    h(ProofLine, { lx, id: lang })
+  )
+}
+
+// ---- Test ----
+
+const TEST_SIZES = [3, 5, 10]
+const dateOf = iso => {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function TestResult({ lx, res, language, onPractice, onDone }) {
+  const weak = res.weak_topics || []
+  const titleOf = id => ((res.by_topic || []).find(b => b.topic === id) || {}).title || id
+  return h(
+    'div',
+    { style: { display: 'flex', flexDirection: 'column', gap: SP.xl }, 'data-testid': 'test-result' },
+    h('div', { style: { ...S.card, display: 'flex', flexDirection: 'column', gap: SP.xs } }, h('div', { style: S.cap }, `Your score in ${langLabel(lx, language)}`), h('div', { style: { fontSize: FS.big, fontWeight: 700, lineHeight: '32px' }, 'data-testid': 'test-score' }, `${res.score} of ${res.total}`)),
+    h(
+      'section',
+      { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } },
+      h('h3', { style: S.h3 }, 'By topic'),
+      (res.by_topic || []).map(b => h('div', { key: b.topic, 'data-testid': 'test-topic', 'data-topic': b.topic, style: { ...S.row, justifyContent: 'space-between', gap: SP.md, border: `1px solid ${C.line}`, borderRadius: 8, padding: `${SP.sm}px ${SP.md}px` } }, h('span', { style: { fontWeight: 600 } }, b.title), h('span', { style: S.muted }, `${b.correct} of ${b.total} right`)))
+    ),
+    h(
+      'section',
+      { style: { display: 'flex', flexDirection: 'column', gap: SP.sm }, 'data-testid': 'test-weak' },
+      h('h3', { style: S.h3 }, 'Topics to practice'),
+      weak.length
+        ? weak.map(t => h('div', { key: t, 'data-testid': 'test-weak-topic', 'data-topic': t, style: { ...S.row, justifyContent: 'space-between', gap: SP.md, flexWrap: 'wrap', border: `1px solid ${tint(C.yellow, 45)}`, background: tint(C.yellow, 8), borderRadius: 8, padding: `${SP.sm}px ${SP.md}px` } }, h('span', { style: { fontWeight: 600 } }, titleOf(t)), h(Button, { size: 'sm', onClick: () => onPractice(t), 'aria-label': `Practice ${titleOf(t)}`, 'data-testid': 'test-practice-this' }, h(Codicon, { name: 'play' }), 'Practice this')))
+        : h('div', { style: S.muted }, 'You got every question right. There is nothing weak to practice.')
+    ),
+    h(
+      'section',
+      { style: { display: 'flex', flexDirection: 'column', gap: SP.md }, 'data-testid': 'test-review' },
+      h('h3', { style: S.h3 }, 'Review'),
+      (res.review || []).map(r => {
+        const col = r.correct ? C.green : C.red
+        return h(
+          'div',
+          { key: r.n, style: { ...S.card, display: 'flex', flexDirection: 'column', gap: SP.sm, borderColor: tint(col, 45) }, 'data-testid': 'test-review-item', 'data-correct': r.correct ? '1' : '0' },
+          h('div', { style: { ...S.row, justifyContent: 'space-between', flexWrap: 'wrap' } }, h('span', { style: { fontWeight: 600 } }, `Question ${r.n}: ${titleOf(r.topic)}`), h('span', { style: { ...S.row, gap: 4, color: col } }, h(Codicon, { name: r.correct ? 'pass-filled' : 'error' }), r.correct ? 'Right' : 'Wrong')),
+          h('pre', { style: { ...mono(), fontSize: 13, lineHeight: '19px', overflowX: 'auto' } }, r.code),
+          h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: SP.md } }, h('div', null, h('div', { style: S.cap }, 'Your answer'), h('pre', { style: mono() }, shown(r.your_answer))), h('div', null, h('div', { style: S.cap }, "Ran in CodeCoach's sandbox"), h('pre', { style: mono() }, shown(r.expected_stdout)))),
+          (r.explanation || []).length ? h('div', null, h('div', { style: S.cap }, "Tutor's explanation"), (r.explanation || []).map((x, k) => h('p', { key: k, style: { margin: `${SP.xs}px 0 0`, maxWidth: MAX_READ } }, x))) : null
+        )
+      })
+    ),
+    h('div', null, h(Button, { variant: 'outline', onClick: onDone, 'data-testid': 'test-done' }, 'Back to tests'))
+  )
+}
+
+// One test on screen: builds, then one question at a time. Nothing about right or wrong is shown until Finish.
+function TestRun({ lx, testId, onPractice, onLeave }) {
+  const [st, setSt] = useState({ data: null, error: null })
+  const [idx, setIdx] = useState(0)
+  const [answers, setAnswers] = useState({}) // n -> text typed here
+  const [saved, setSaved] = useState({}) // n -> text last sent
+  const [res, setRes] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const alive = useRef(true)
+  const timer = useRef(null)
+  const load = useCallback(async () => {
+    try {
+      const d = await api(`/tests/${encode(testId)}`)
+      if (alive.current) setSt({ data: d, error: null })
+    } catch (e) {
+      if (alive.current) setSt(s => ({ ...s, error: errText(e) }))
+    }
+  }, [testId])
+  useEffect(() => {
+    alive.current = true
+    load()
+    return () => {
+      alive.current = false
+      if (timer.current) timer.current()
+    }
+  }, [load])
+  const d = st.data
+  const building = !!d && d.status === 'building' && !st.error
+  useEffect(() => {
+    if (!building) return undefined
+    timer.current = CTX.setTimeout(load, PROJ_POLL_MS)
+    return () => timer.current && timer.current()
+  }, [building, st.data, load])
+
+  const q = d && d.questions ? d.questions[idx] : null
+  const dr = useDrill(q ? q.drill_id : '')
+  // Send the answer for question n if it changed. Throws plain text on failure.
+  const save = async n => {
+    const t = answers[n]
+    if (t === undefined || t === saved[n]) return
+    await api(`/tests/${encode(testId)}/answer`, { method: 'POST', body: { n, prediction: t } })
+    setSaved(s => ({ ...s, [n]: t }))
+  }
+  const go = async to => {
+    if (busy || !q) return
+    setBusy(true)
+    setErr(null)
+    try {
+      await save(q.n)
+      setIdx(to)
+    } catch (e) {
+      setErr(`Your answer was not saved: ${errText(e)}`)
+    } finally {
+      if (alive.current) setBusy(false)
+    }
+  }
+  const finish = async () => {
+    if (busy) return
+    setBusy(true)
+    setErr(null)
+    try {
+      if (q) await save(q.n)
+      setRes(await api(`/tests/${encode(testId)}/finish`, { method: 'POST', body: {} }))
+    } catch (e) {
+      setErr(`Could not finish the test: ${errText(e)}`)
+    } finally {
+      if (alive.current) setBusy(false)
+    }
+  }
+  const head = h('div', { style: { ...S.row, justifyContent: 'space-between', flexWrap: 'wrap' } }, h(Button, { size: 'sm', variant: 'ghost', onClick: onLeave, disabled: busy, 'data-testid': 'test-leave' }, h(Codicon, { name: 'arrow-left' }), 'All tests'), d ? h('span', { style: S.cap }, langLabel(lx, d.language)) : null)
+  if (st.error && !d) return h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.lg }, 'data-testid': 'test-run' }, head, h(Banner, { tone: 'bad' }, `Could not open this test: ${st.error}`), h('div', null, h(Button, { onClick: load }, 'Try again')))
+  if (!d) return h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.lg }, 'data-testid': 'test-run' }, head, h(Spinner, { text: 'Opening the test' }))
+  const shownRes = res || d.result
+  if (shownRes) return h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.lg }, 'data-testid': 'test-run', 'data-test-status': 'done' }, head, h(TestResult, { lx, res: shownRes, language: d.language, onPractice: t => onPractice(t, d.language), onDone: onLeave }))
+  const total = d.size
+  const allReady = d.status !== 'building'
+  const n = idx + 1
+  const last = n === total
+  const nextReady = idx + 1 < (d.questions || []).length
+  const answeredCount = (d.questions || []).filter(x => (answers[x.n] !== undefined ? answers[x.n].trim() !== '' : x.answered)).length
+  return h(
+    'div',
+    { style: { display: 'flex', flexDirection: 'column', gap: SP.xl }, 'data-testid': 'test-run', 'data-test-status': d.status },
+    head,
+    !allReady
+      ? h('div', { style: { ...S.card, display: 'flex', gap: SP.md, alignItems: 'flex-start' }, role: 'status', 'data-testid': 'test-building' }, h(Codicon, { name: 'loading', spinning: true }), h('div', { style: { maxWidth: MAX_READ } }, h('div', { style: { fontWeight: 600 }, 'data-testid': 'test-ready-count' }, `${d.ready_count} of ${total} questions ready`), h('div', null, TEST_WAIT)))
+      : null,
+    st.error ? h(Banner, { tone: 'warn' }, `The last look failed: ${st.error}`) : null,
+    q
+      ? h(
+          'section',
+          { style: { display: 'flex', flexDirection: 'column', gap: SP.md }, 'data-testid': 'test-question' },
+          h('div', { style: { ...S.row, justifyContent: 'space-between', flexWrap: 'wrap' } }, h('h3', { style: S.h3, 'data-testid': 'test-count' }, `Question ${n} of ${total}`), h('span', { style: S.muted }, `${answeredCount} answered`)),
+          dr.error && !dr.data ? h(Banner, { tone: 'bad' }, `Could not open this question: ${dr.error}`) : null,
+          !dr.data ? h(Spinner, { text: 'Opening the question' }) : dr.data.status !== 'ready' ? h(Banner, { tone: 'warn' }, dr.data.reason || 'This question is still being built.') : h(ProgramView, { code: dr.data.code, stdin: dr.data.stdin }),
+          dr.data && dr.data.status === 'ready'
+            ? h(
+                'div',
+                { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } },
+                h('div', { style: { fontWeight: 600 } }, 'Type exactly what this program prints'),
+                h(PredictionBox, { key: q.n, value: answers[q.n] !== undefined ? answers[q.n] : '', onChange: v => setAnswers(a => ({ ...a, [q.n]: v })), disabled: busy, lines: dr.data.line_count, testid: 'test-answer', label: `Your answer to question ${n}` })
+              )
+            : null
+        )
+      : null,
+    err ? h(Banner, { tone: 'bad' }, err) : null,
+    h(
+      'div',
+      { style: { ...S.row, flexWrap: 'wrap' } },
+      h(Button, { variant: 'outline', onClick: () => go(idx - 1), disabled: busy || idx === 0, 'data-testid': 'test-prev' }, h(Codicon, { name: 'arrow-left' }), 'Previous'),
+      !last ? h(Button, { onClick: () => go(idx + 1), disabled: busy || !nextReady, 'data-testid': 'test-next' }, busy ? 'Saving' : 'Next', h(Codicon, { name: 'arrow-right' })) : null,
+      last || allReady ? h(Button, { variant: last ? 'default' : 'outline', onClick: finish, disabled: busy || !allReady, 'data-testid': 'test-finish' }, h(Codicon, { name: busy ? 'loading' : 'check-all', spinning: busy }), busy ? 'Finishing' : 'Finish and see my score') : null,
+      !nextReady && !last ? h('span', { style: S.muted }, 'The next question is still being built.') : null
+    )
+  )
+}
+
+function TestView({ lx, onPractice }) {
+  const lang = lx.picked
+  const [size, setSize] = useState(5)
+  const [openId, setOpenId] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const st = useRoute('/tests', [openId])
+  const alive = useRef(true)
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+    }
+  }, [])
+  const start = async () => {
+    if (busy || !lang) return
+    setBusy(true)
+    setErr(null)
+    try {
+      const r = await api('/tests', { method: 'POST', body: { language: lang, size } })
+      if (alive.current) setOpenId(r.test_id)
+    } catch (e) {
+      if (alive.current) setErr(errText(e))
+    } finally {
+      if (alive.current) setBusy(false)
+    }
+  }
+  if (openId)
+    return h(
+      Wrap,
+      { max: 820, gap: SP.xl, 'data-testid': 'view-test' },
+      h(TestRun, { key: openId, lx, testId: openId, onLeave: () => setOpenId(null), onPractice })
+    )
+  const old = st.data && st.data.__old
+  const past = st.data && !old ? st.data.tests || [] : null
+  return h(
+    Wrap,
+    { max: 820, gap: SP.xl, 'data-testid': 'view-test' },
+    h(ViewHead, { title: 'Test', lead: 'A short test: read each program and type what it prints. You see nothing about right or wrong until you finish. Then you get a score and the topics to practise.' }),
+    h(LanguagePicker, { lx }),
+    lang
+      ? h(
+          'section',
+          { style: { display: 'flex', flexDirection: 'column', gap: SP.sm }, 'data-testid': 'test-new' },
+          h('h3', { style: S.h3 }, 'How many questions?'),
+          h('div', { style: { ...S.row, flexWrap: 'wrap' }, role: 'group', 'aria-label': 'Number of questions' }, TEST_SIZES.map(n => h(Button, { key: n, variant: size === n ? 'default' : 'outline', size: 'sm', 'aria-pressed': size === n, onClick: () => setSize(n), disabled: busy, 'data-testid': 'test-size', 'data-size': n }, `${n} questions`))),
+          err ? h(Banner, { tone: 'bad' }, err) : null,
+          h('div', null, h(Button, { onClick: start, disabled: busy, 'data-testid': 'test-start' }, h(Codicon, { name: busy ? 'loading' : 'play', spinning: busy }), busy ? 'Starting' : 'Start the test')),
+          h('div', { style: S.muted }, 'Building a test can take a few minutes with a local model. You can leave this page and come back; the test appears in Past tests.')
+        )
+      : null,
+    h(
+      'section',
+      { style: { display: 'flex', flexDirection: 'column', gap: SP.sm }, 'data-testid': 'test-past' },
+      h('h3', { style: S.h3 }, 'Past tests'),
+      st.loading && !st.data ? h(Spinner, { text: 'Loading your tests' }) : null,
+      st.error ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } }, h(Banner, { tone: 'bad' }, `Could not load your tests: ${st.error}`), h('div', null, h(Button, { onClick: st.reload }, 'Try again'))) : null,
+      old ? h(Banner, { tone: 'warn' }, OLD_BACKEND) : null,
+      past && !past.length ? h('div', { style: S.muted }, 'No tests yet.') : null,
+      past
+        ? past.map(t =>
+            h(
+              'div',
+              { key: t.id, className: 'ath-row', 'data-testid': 'test-past-row', 'data-test-id': t.id, style: { ...S.row, border: `1px solid ${C.line}`, borderRadius: 8, padding: `${SP.sm}px ${SP.md}px`, gap: SP.md, flexWrap: 'wrap' } },
+              h('span', { style: { fontWeight: 600, flex: '1 1 160px', minWidth: 0 } }, `${langLabel(lx, t.language)}, ${plural(t.total, 'question')}`),
+              h('span', { style: { ...S.muted, flex: '0 1 auto' } }, `${dateOf(t.created_at)}${dateOf(t.created_at) ? ', ' : ''}${t.status === 'done' ? `${t.score} of ${t.total}` : t.status === 'building' ? 'being built' : 'not finished'}`),
+              h(Button, { size: 'sm', variant: 'outline', onClick: () => setOpenId(t.id), 'aria-label': t.status === 'done' ? 'See this test' : 'Open this test', 'data-testid': 'test-past-open' }, t.status === 'done' ? 'See result' : 'Open')
+            )
+          )
+        : null
+    ),
+    h(ProofLine, { lx, id: lang })
+  )
+}
+
 
 // The code the learner typed, kept per project and step, so it survives switching steps, views and reloads.
 const draftKey = (pid, i) => `proj:code:${pid}:${i}`
@@ -4234,17 +5074,17 @@ const STEP_ICON = {
   planned: ['circle-outline', 't4']
 }
 
-function ProjectsView({ openId, setOpenId }) {
+function ProjectsView({ openId, setOpenId, lx }) {
   const [seed, setSeed] = useState(null) // an idea to put in the box when coming back from a refused project
   return openId
-    ? h(ProjectScreen, { key: openId, pid: openId, onHome: () => setOpenId(null), onAnother: (idea, lang) => (setSeed(idea ? { idea, lang } : null), setOpenId(null)), onOpen: setOpenId })
-    : h(ProjectHome, { seed, onOpen: setOpenId })
+    ? h(ProjectScreen, { key: openId, pid: openId, lx, onHome: () => setOpenId(null), onAnother: (idea, lang) => (setSeed(idea ? { idea, lang } : null), setOpenId(null)), onOpen: setOpenId })
+    : h(ProjectHome, { seed, lx, onOpen: setOpenId })
 }
 
-function ProjectHome({ seed, onOpen }) {
+function ProjectHome({ seed, lx, onOpen }) {
   const st = useAsync(() => api('/projects'), [])
   const [idea, setIdea] = useState(seed ? seed.idea : '')
-  const [lang, setLang] = useState(seed && seed.lang ? seed.lang : 'c')
+  const lang = lx.picked
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
   const [del, setDel] = useState(null)
@@ -4252,7 +5092,7 @@ function ProjectHome({ seed, onOpen }) {
   const noSandbox = !!data && data.sandbox !== 'bwrap'
   const len = idea.trim().length
   const start = async () => {
-    if (busy || len < 3 || len > 300 || noSandbox) return
+    if (busy || len < 3 || len > 300 || noSandbox || !lang) return
     setBusy(true)
     setErr(null)
     try {
@@ -4261,6 +5101,21 @@ function ProjectHome({ seed, onOpen }) {
     } catch (e) {
       setErr(errText(e))
       if (errCode(e) === 'sandbox_unavailable') st.reload()
+    } finally {
+      setBusy(false)
+    }
+  }
+  const starter = data && Array.isArray(data.starters) && data.starters.length ? data.starters[0] : null
+  const starterOk = !!starter && !!lang && (starter.languages || []).includes(lang)
+  const startStarter = async () => {
+    if (busy || noSandbox || !lang || !starterOk) return
+    setBusy(true)
+    setErr(null)
+    try {
+      const r = await api('/projects', { method: 'POST', body: { starter: starter.id, language: lang } })
+      onOpen(r.project_id)
+    } catch (e) {
+      setErr(errText(e))
     } finally {
       setBusy(false)
     }
@@ -4274,8 +5129,13 @@ function ProjectHome({ seed, onOpen }) {
     setDel(null)
     st.reload()
   }
-  const langBtn = l =>
-    h(Button, { key: l, size: 'sm', variant: lang === l ? 'secondary' : 'ghost', role: 'radio', 'aria-checked': lang === l, onClick: () => setLang(l), 'data-testid': `project-lang-${l}` }, LANG_NAME[l])
+  // Idea chips pair with the picked language: the ones written for it, else every idea once by title.
+  const allIdeas = (data && data.ideas) || []
+  const mine = allIdeas.filter(i => i.language === lang)
+  const seen = new Set()
+  const ideas = (mine.length ? mine : allIdeas).filter(i => (seen.has(i.title) ? false : (seen.add(i.title), true))).slice(0, 8)
+  const fitRec = lang ? lx.fitOf(lang) : null
+  const poorLine = !lx.legacy && fitRec && fitRec.status === 'done' && fitRec.verdict === 'poor' && !fitRec.stale && fitRec.advice ? fitRec.advice : null
   const statusLabel = p => (p.status === 'planning' ? 'Planning' : p.status === 'refused' ? 'Not built' : p.status === 'failed' ? 'Could not plan' : p.status === 'done' ? 'Built' : `Step ${Math.min(p.steps_passed + 1, p.steps_total)} of ${p.steps_total}`)
   return h(
     Wrap,
@@ -4283,21 +5143,36 @@ function ProjectHome({ seed, onOpen }) {
     h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.xs } }, h('h2', { style: { ...S.h2, fontSize: FS.big, lineHeight: '32px' } }, 'Build something'), h('div', { style: { ...S.muted, maxWidth: MAX_READ } }, 'Name a small program. CodeCoach splits it into small steps, teaches each one, and you write the code yourself. Every step is checked by really running your code.')),
     noSandbox ? h(Banner, { tone: 'warn' }, PROJ_NO_SANDBOX) : null,
     st.error ? h(Banner, { tone: 'bad' }, `Could not load your projects: ${st.error}`) : null,
+    starter
+      ? h(
+          'div',
+          { style: { ...S.card, display: 'flex', flexDirection: 'column', gap: SP.sm }, 'data-testid': 'starter-card' },
+          h('h3', { style: S.h3 }, 'Start with a ready-made project'),
+          h('div', { style: { fontWeight: 600 }, 'data-testid': 'starter-title' }, starter.title),
+          h('div', { style: { maxWidth: MAX_READ } }, starter.pitch),
+          h('div', { style: S.muted }, `${plural(starter.steps, 'step')}. No waiting: it does not need a model.`),
+          h('div', { style: S.row }, h(Button, { onClick: startStarter, disabled: busy || noSandbox || !lang || !starterOk, 'data-testid': 'starter-start' }, h(Codicon, { name: busy ? 'loading' : 'play', spinning: busy }), busy ? 'Starting' : lang && starterOk ? `Start in ${langLabel(lx, lang)}` : 'Start')),
+          lang && !starterOk ? h('div', { style: S.muted, 'data-testid': 'starter-unavailable' }, `Not available in ${langLabel(lx, lang)} yet.`) : null
+        )
+      : null,
+    h(LanguagePicker, { lx }),
+    h(ProofLine, { lx, id: lang }),
     h(
       'div',
       { style: { ...S.card, display: 'flex', flexDirection: 'column', gap: SP.md } },
+      h('h3', { style: S.h3 }, 'What do you want to build?'),
       h(Textarea, { value: idea, rows: 3, 'aria-label': 'Your idea', 'data-testid': 'project-idea', placeholder: 'For example: a number-guessing game', maxLength: 300, onChange: e => setIdea(e.target.value), style: { fontSize: FS.lead } }),
-      h('div', { style: { ...S.row, gap: SP.md, flexWrap: 'wrap' } }, h('span', { style: S.muted }, 'Language'), h('div', { role: 'radiogroup', 'aria-label': 'Language', style: { ...S.row, gap: SP.xs } }, langBtn('c'), langBtn('python'))),
-      data && data.ideas && data.ideas.length
+      ideas.length
         ? h(
             'div',
             { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } },
             h('div', { style: S.cap }, 'Or start from an idea'),
-            h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: SP.sm } }, data.ideas.map(i => h(Button, { key: i.title + i.language, size: 'sm', variant: 'outline', title: i.pitch, 'data-testid': 'project-idea-chip', onClick: () => (setIdea(i.title), setLang(i.language)) }, i.title, h('span', { style: { ...S.cap, marginLeft: SP.xs } }, LANG_NAME[i.language]))))
+            h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: SP.sm } }, ideas.map(i => h(Button, { key: i.title + i.language, size: 'sm', variant: 'outline', title: i.pitch, 'data-testid': 'project-idea-chip', onClick: () => setIdea(i.title) }, i.title)))
           )
         : null,
       err ? h(Banner, { tone: 'bad' }, err) : null,
-      h('div', { style: S.row }, h(Button, { onClick: start, disabled: busy || len < 3 || noSandbox, 'data-testid': 'project-start' }, h(Codicon, { name: busy ? 'loading' : 'tools', spinning: busy }), busy ? 'Starting' : 'Start'), len > 300 ? h('span', { style: { ...S.muted, color: C.red } }, 'Keep the idea under 300 characters.') : null)
+      h('div', { style: S.row }, h(Button, { onClick: start, disabled: busy || len < 3 || noSandbox || !lang, 'data-testid': 'project-start' }, h(Codicon, { name: busy ? 'loading' : 'tools', spinning: busy }), busy ? 'Starting' : 'Start'), len > 300 ? h('span', { style: { ...S.muted, color: C.red } }, 'Keep the idea under 300 characters.') : null),
+      poorLine ? h('div', { style: { ...S.row, alignItems: 'flex-start', color: C.t2 }, 'data-testid': 'fit-warning' }, h(Codicon, { name: 'warning', style: { color: C.yellow, flex: 'none', marginTop: 2 } }), poorLine) : null
     ),
     st.loading && !data ? h(Spinner, { text: 'Loading your projects' }) : null,
     data && data.projects.length
@@ -4309,8 +5184,8 @@ function ProjectHome({ seed, onOpen }) {
             h(
               'div',
               { key: p.id, className: 'ath-row', 'data-project-id': p.id, style: { ...S.row, border: `1px solid ${C.line}`, borderRadius: 8, padding: `${SP.sm}px ${SP.md}px`, gap: SP.md } },
-              h(Button, { variant: 'ghost', onClick: () => onOpen(p.id), 'data-testid': 'project-open', style: { flex: 1, justifyContent: 'flex-start', textAlign: 'left', minWidth: 0 } }, h(Codicon, { name: p.status === 'done' ? 'pass-filled' : 'tools', style: { color: p.status === 'done' ? C.green : C.t2 } }), h('span', { style: { fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis' } }, p.title || 'Untitled project')),
-              h(Chip, { tone: 'accent' }, LANG_NAME[p.language] || p.language),
+              h(Button, { variant: 'ghost', onClick: () => onOpen(p.id), 'data-testid': 'project-open', style: { flex: 1, justifyContent: 'flex-start', textAlign: 'left', minWidth: 0 } }, h(Codicon, { name: p.status === 'done' ? 'pass-filled' : 'tools', style: { color: p.status === 'done' ? C.green : C.t2 } }), h('span', { style: { fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis' } }, p.title || 'Untitled project'), p.starter ? h('span', { style: { ...S.cap, flex: 'none' }, 'data-testid': 'starter-label' }, 'Ready-made project') : null),
+              h(Chip, { tone: 'accent' }, langLabel(lx, p.language)),
               h('span', { style: { ...S.muted, minWidth: 90 }, 'data-testid': 'project-progress' }, statusLabel(p)),
               del === p.id
                 ? h('span', { style: S.row }, h('span', { style: S.muted }, 'Delete it?'), h(Button, { size: 'sm', variant: 'outline', onClick: () => remove(p.id), 'data-testid': 'project-delete-yes' }, 'Delete'), h(Button, { size: 'sm', variant: 'ghost', onClick: () => setDel(null) }, 'Keep'))
@@ -4322,7 +5197,7 @@ function ProjectHome({ seed, onOpen }) {
   )
 }
 
-function ProjectScreen({ pid, onHome, onAnother, onOpen }) {
+function ProjectScreen({ pid, lx, onHome, onAnother, onOpen }) {
   const [proj, setProj] = useState(null)
   const [err, setErr] = useState(null)
   const [sel, setSel] = useState(null)
@@ -4364,7 +5239,7 @@ function ProjectScreen({ pid, onHome, onAnother, onOpen }) {
   if (!proj) return h(Wrap, { max: 820 }, back, h(Spinner, { text: 'Opening your project' }))
 
   if (proj.status === 'planning')
-    return h(Wrap, { max: 720, gap: SP.lg, 'data-testid': 'project-planning' }, back, h('h2', { style: { ...S.h2, fontSize: FS.title } }, proj.idea || proj.title), h('div', { style: { ...S.card, display: 'flex', gap: SP.md, alignItems: 'flex-start' }, role: 'status' }, h(Codicon, { name: 'loading', spinning: true }), h('div', { style: { maxWidth: MAX_READ } }, PROJ_WAIT)))
+    return h(Wrap, { max: 720, gap: SP.lg, 'data-testid': 'project-planning' }, back, h('h2', { style: { ...S.h2, fontSize: FS.title } }, proj.idea || proj.title), h('div', { style: { ...S.card, display: 'flex', gap: SP.md, alignItems: 'flex-start' }, role: 'status' }, h(Codicon, { name: 'loading', spinning: true }), h('div', { style: { maxWidth: MAX_READ } }, proj.starter ? 'Setting up your ready-made project. This takes a few seconds and does not need a model.' : PROJ_WAIT)))
 
   if (proj.status === 'refused' || proj.status === 'failed') {
     const refused = proj.status === 'refused'
@@ -4390,9 +5265,9 @@ function ProjectScreen({ pid, onHome, onAnother, onOpen }) {
   return h(
     'div',
     { style: { display: 'flex', flexDirection: 'column', gap: SP.lg, maxWidth: MAX_WIDE, margin: '0 auto' }, 'data-testid': 'project-screen', 'data-project-status': proj.status },
-    h('div', { style: { ...S.row, justifyContent: 'space-between', flexWrap: 'wrap' } }, back, h('span', { style: S.row }, h(Chip, { tone: 'accent' }, LANG_NAME[proj.language] || proj.language), h('span', { style: S.cap }, `${proj.steps.filter(s => s.status === 'passed').length} of ${proj.steps.length} steps done`))),
-    h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.xs } }, h('h2', { style: { ...S.h2, fontSize: FS.title, lineHeight: '28px' }, 'data-testid': 'project-title' }, proj.title), proj.summary ? h('div', { style: { ...S.muted, maxWidth: MAX_READ } }, proj.summary) : null),
-    done ? h(ProjectDone, { proj, pid }) : null,
+    h('div', { style: { ...S.row, justifyContent: 'space-between', flexWrap: 'wrap' } }, back, h('span', { style: S.row }, h(Chip, { tone: 'accent' }, langLabel(lx, proj.language)), h('span', { style: S.cap }, `${proj.steps.filter(s => s.status === 'passed').length} of ${proj.steps.length} steps done`))),
+    h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.xs } }, h('div', { style: { ...S.row, flexWrap: 'wrap', gap: SP.sm } }, h('h2', { style: { ...S.h2, fontSize: FS.title, lineHeight: '28px' }, 'data-testid': 'project-title' }, proj.title), proj.starter ? h('span', { style: S.cap, 'data-testid': 'starter-label' }, 'Ready-made project') : null), proj.summary ? h('div', { style: { ...S.muted, maxWidth: MAX_READ } }, proj.summary) : null),
+    done ? h(ProjectDone, { proj, pid, lx }) : null,
     h(
       'div',
       { style: { display: 'grid', gridTemplateColumns: 'minmax(180px, 240px) minmax(0, 1fr)', gap: SP.xl, alignItems: 'start' } },
@@ -4412,12 +5287,13 @@ function ProjectScreen({ pid, onHome, onAnother, onOpen }) {
           )
         })
       ),
-      h(StepPane, { key: `${pid}:${open}`, pid, proj, index: open, onChanged: load, onGoto: setSel })
-    )
+      h(StepPane, { key: `${pid}:${open}`, pid, proj, lx, index: open, onChanged: load, onGoto: setSel })
+    ),
+    h(ProofLine, { lx, id: proj.language })
   )
 }
 
-function ProjectDone({ proj, pid }) {
+function ProjectDone({ proj, pid, lx }) {
   const concepts = []
   for (const s of proj.steps) if (s.concept && !concepts.includes(s.concept)) concepts.push(s.concept)
   const code = proj.code || readDraft(pid, proj.steps.length - 1)
@@ -4432,11 +5308,11 @@ function ProjectDone({ proj, pid }) {
     h('div', { style: { ...S.row, gap: SP.md } }, h(Codicon, { name: 'pass-filled', style: { color: C.green, fontSize: FS.big } }), h('h2', { style: { ...S.h2, fontSize: FS.title } }, 'You built it')),
     h('div', { style: { color: C.t2 } }, `Every step passed${helped ? `, ${helped} with CodeCoach's help` : ''}. The program is yours.`),
     h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.xs } }, h('div', { style: S.cap }, 'Concepts you used'), h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: SP.xs }, 'data-testid': 'project-concepts' }, concepts.map(c => h(Chip, { key: c }, c)))),
-    h('div', null, h(Button, { onClick: () => downloadText(`${slugOf(proj.title)}.${LANG_EXT[proj.language] || 'txt'}`, code), 'data-testid': 'project-download' }, h(Codicon, { name: 'cloud-download' }), 'Download your program'))
+    h('div', null, h(Button, { onClick: () => downloadText(`${slugOf(proj.title)}.${extOf(lx, proj.language)}`, code), 'data-testid': 'project-download' }, h(Codicon, { name: 'cloud-download' }), 'Download your program'))
   )
 }
 
-function StepPane({ pid, proj, index, onChanged, onGoto }) {
+function StepPane({ pid, proj, lx, index, onChanged, onGoto }) {
   const row = proj.steps[index]
   const rowStatus = row ? row.status : 'locked'
   const listed = rowStatus === 'planned' && index > (proj.current || 0) ? 'locked' : rowStatus
@@ -4475,12 +5351,21 @@ function StepPane({ pid, proj, index, onChanged, onGoto }) {
     }
   }, [step])
 
+  // Live typing runs the visible tests only for a language whose warm run is cheap (live_run); others run on Run.
+  const liveOk = !!(langOf(lx, proj.language) || {}).live_run
+  const liveCancel = useRef(null)
+  useEffect(() => () => liveCancel.current && liveCancel.current(), [])
   const onChange = v => {
     codeRef.current = v
     setCode(v)
     setDirty(true)
     CTX.storage.set(draftKey(pid, index), v)
+    if (liveOk && v.trim()) {
+      if (liveCancel.current) liveCancel.current()
+      liveCancel.current = CTX.setTimeout(() => doRunRef.current && doRunRef.current(), 1200)
+    }
   }
+  const doRunRef = useRef(null)
   const call = async (verb, body) => {
     if (busy) return null
     setBusy(verb)
@@ -4502,6 +5387,7 @@ function StepPane({ pid, proj, index, onChanged, onGoto }) {
       setDirty(false)
     }
   }
+  doRunRef.current = doRun
   const doCheck = async () => {
     const r = await call('check', { code: codeRef.current })
     if (!r) return
@@ -4572,6 +5458,7 @@ function StepPane({ pid, proj, index, onChanged, onGoto }) {
         { style: { display: 'flex', flexDirection: 'column', gap: SP.md }, 'data-testid': 'project-step-unavailable' },
         h(Banner, { tone: 'warn' }, step.reason || 'CodeCoach could not build this step.'),
         err ? h(Banner, { tone: 'bad' }, err) : null,
+        lx.legacy || proj.starter ? null : h('div', { style: { display: 'flex', flexDirection: 'column', gap: SP.sm }, 'data-testid': 'step-fit' }, h(FitPanel, { lx, id: proj.language, forceSwitch: true })),
         h('div', null, h(Button, { onClick: doRetry, disabled: !!busy, 'data-testid': 'project-retry' }, busy ? 'Trying again' : 'Try again'))
       )
     )
@@ -4626,8 +5513,8 @@ function StepPane({ pid, proj, index, onChanged, onGoto }) {
       h(
         'div',
         { style: { display: 'flex', flexDirection: 'column', gap: SP.sm } },
-        h(Textarea, { ref: taRef, value: code, rows: 14, spellCheck: false, 'aria-label': `${LANG_NAME[proj.language] || ''} code editor`, 'data-testid': 'project-editor', onChange: e => onChange(e.target.value), onKeyDown, wrap: 'off', style: { fontFamily: MONO, fontSize: 13, lineHeight: '19px', tabSize: 4, whiteSpace: 'pre', overflow: 'auto', resize: 'vertical', minHeight: 260 } }),
-        h('div', { style: S.muted }, 'Press Ctrl+Enter to run. Tab inserts spaces; press Esc then Tab to move focus out of the editor.'),
+        h(Textarea, { ref: taRef, value: code, rows: 14, spellCheck: false, 'aria-label': `${langLabel(lx, proj.language)} code editor`, 'data-testid': 'project-editor', onChange: e => onChange(e.target.value), onKeyDown, wrap: 'off', style: { fontFamily: MONO, fontSize: 13, lineHeight: '19px', tabSize: 4, whiteSpace: 'pre', overflow: 'auto', resize: 'vertical', minHeight: 260 } }),
+        h('div', { style: S.muted, 'data-testid': 'project-editor-hint', 'data-live': liveOk ? '1' : '0' }, `${liveOk ? 'The tests re-run when you pause typing. ' : ''}Press Ctrl+Enter to run. Tab inserts spaces; press Esc then Tab to move focus out of the editor.`),
         h(
           'div',
           { style: { ...S.row, flexWrap: 'wrap', gap: SP.sm } },
@@ -4669,8 +5556,14 @@ function StepPane({ pid, proj, index, onChanged, onGoto }) {
   ])
 }
 
-const VIEWS = [
-  ['projects', 'Projects', 'tools'],
+// Coding views, always on. Practice and Test are placeholders until the next card.
+const CODE_VIEWS = [
+  ['projects', 'Build', 'tools'],
+  ['drill', 'Practice', 'beaker'],
+  ['test', 'Test', 'checklist']
+]
+// The course and notes views: shown only when GET /meta says features.notes is true.
+const NOTES_VIEWS = [
   ['library', 'Library', 'library'],
   ['map', 'Course', 'type-hierarchy'],
   ['learn', 'Learn', 'lightbulb'],
@@ -4681,14 +5574,24 @@ const VIEWS = [
 ]
 
 function CodeCoachPage() {
-  const [view, setView] = useState('projects')
+  const [rawView, setView] = useState('projects')
+  // If /meta fails the notes views stay hidden: notes are treated as off.
+  const meta = useAsync(() => api('/meta'), [])
+  const notes = !!(meta.data && meta.data.features && meta.data.features.notes === true)
+  const notesRef = useRef(false)
+  notesRef.current = notes
+  const views = notes ? [...CODE_VIEWS, ...NOTES_VIEWS] : CODE_VIEWS
+  const view = views.some(v => v[0] === rawView) ? rawView : 'projects'
+  const notesView = notes && NOTES_VIEWS.some(v => v[0] === view)
+  const lx = useLangs()
+  const [practiceJump, setPracticeJump] = useState(null)
   const [projOpen, setProjOpen] = useState(() => CTX.storage.get('project:open', null))
   const [courseId, setCourseIdState] = useState(() => CTX.storage.get('course', null))
   const [objective, setObjective] = useState(null)
   const [token, setToken] = useState(0)
   const [focus, setFocus] = useState(null)
   const [readNote, setReadNote] = useState(null)
-  const courses = useAsync(() => api('/courses'), [])
+  const courses = useAsync(() => (notes ? api('/courses') : Promise.resolve(null)), [notes])
   const [srcOpen, setSrcOpen] = useState(false)
   const [srcW, setSrcW] = useState(null)
   const [srcTarget, setSrcTarget] = useState(null)
@@ -4724,14 +5627,14 @@ function CodeCoachPage() {
   }
 
   useEffect(() => {
-    if (pending.next) {
+    if (pending.next && notesRef.current) {
       pending.next = false
       setView('practice')
       setObjective(null)
       setToken(t => t + 1)
     }
     return bus.on((type, payload) => {
-      if (type === 'next') {
+      if (type === 'next' && notesRef.current) {
         pending.next = false
         setView('practice')
         setObjective(null)
@@ -4750,7 +5653,7 @@ function CodeCoachPage() {
         if (payload && payload.stop) setSrcTarget(t => (t && t.hold ? { ...t, hold: false, tick } : t))
         else if (srcOpenRef.current && payload) setSrcTarget({ docId: payload.docId, passageId: payload.passageId, hold: true, tick })
       }
-      if (type === 'topic') {
+      if (type === 'topic' && notesRef.current) {
         setMapSel(payload)
         setObjective(null)
         setView('map')
@@ -4803,7 +5706,7 @@ function CodeCoachPage() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
-  const showSources = !!cid && view !== 'library' && view !== 'projects' && srcOpen
+  const showSources = notesView && !!cid && view !== 'library' && srcOpen
   srcOpenRef.current = showSources
   const narrow = pageW < 820
   const minW = 280
@@ -4853,7 +5756,9 @@ function CodeCoachPage() {
   }
 
   let body
-  if (view === 'projects') body = h(ProjectsView, { openId: projOpen, setOpenId: openProject })
+  if (view === 'projects') body = h(ProjectsView, { openId: projOpen, setOpenId: openProject, lx })
+  else if (view === 'drill') body = h(CodePracticeView, { lx, jump: practiceJump, onJumpDone: () => setPracticeJump(null) })
+  else if (view === 'test') body = h(TestView, { lx, onPractice: (topic, language) => (lx.setPicked(language), setPracticeJump({ lang: language, topic }), setView('drill')) })
   else if (courses.loading && !courses.data) body = h(Spinner, { text: 'Loading your courses' })
   else if (courses.error) body = h(Banner, { tone: 'bad' }, `CodeCoach's backend did not answer: ${courses.error}. Is the plugin enabled and the gateway restarted?`)
   else if (view === 'library') body = h(LibraryView, { courses: list, courseId: cid, setCourseId, setView, reload: courses.reload })
@@ -4872,9 +5777,9 @@ function CodeCoachPage() {
     h(
       'div',
       { style: { ...S.row, padding: `${SP.sm}px ${SP.xl}px`, borderBottom: `1px solid ${C.line}`, gap: SP.lg, flexWrap: 'wrap' } },
-      h('nav', { style: S.row, 'aria-label': 'CodeCoach sections' }, VIEWS.map(([id, label, icon]) => h(Button, { key: id, size: 'sm', variant: view === id ? 'secondary' : 'ghost', onClick: () => goView(id), 'aria-current': view === id ? 'page' : undefined }, h(Codicon, { name: icon }), label))),
+      h('nav', { style: S.row, 'aria-label': 'CodeCoach sections' }, views.map(([id, label, icon]) => h(Button, { key: id, size: 'sm', variant: view === id ? 'secondary' : 'ghost', onClick: () => goView(id), 'aria-current': view === id ? 'page' : undefined }, h(Codicon, { name: icon }), label))),
       h('div', { style: { flex: 1 } }),
-      list.length > 0 && view !== 'library' && view !== 'projects'
+      notesView && list.length > 0 && view !== 'library'
         ? h(
             'span',
             { style: { ...S.row, gap: SP.xs } },
@@ -4886,7 +5791,7 @@ function CodeCoachPage() {
             h('select', { value: cid || '', 'aria-label': 'Course', onChange: e => setCourseId(e.target.value), style: { ...S.field, width: 'auto', maxWidth: 360, fontSize: FS.lead, fontWeight: 600, background: 'transparent', border: `1px solid transparent`, paddingLeft: SP.sm } }, list.map(c => h('option', { key: c.id, value: c.id }, c.title)))
           )
         : null,
-      active && view !== 'library' && view !== 'projects'
+      notesView && active && view !== 'library'
         ? h(Button, { size: 'sm', variant: showSources ? 'secondary' : 'ghost', onClick: e => ((srcHome.current = e.currentTarget), toggleSources(!showSources)), 'aria-pressed': showSources, 'aria-label': 'Sources', 'data-testid': 'sources-toggle' }, h(Codicon, { name: 'file-text' }), 'Sources')
         : null
     ),
@@ -4916,22 +5821,35 @@ export default {
     CTX = ctx
     ctx.registerMany([
       { id: 'page', area: ROUTES_AREA, data: { path: '/codecoach' }, render: () => h(CodeCoachPage, {}) },
-      { id: 'nav', area: SIDEBAR_NAV_AREA, data: { path: '/codecoach', label: 'CodeCoach', codicon: 'mortar-board' } },
-      {
-        id: 'next',
-        area: PALETTE_AREA,
-        data: {
-          id: 'codecoach.next',
-          label: 'CodeCoach: next question',
-          keywords: ['codecoach', 'practice', 'question', 'quiz', 'study'],
-          run: () => {
-            pending.next = true
-            host.navigate('/codecoach')
-            bus.emit('next')
-          }
-        }
-      }
+      { id: 'nav', area: SIDEBAR_NAV_AREA, data: { path: '/codecoach', label: 'CodeCoach', codicon: 'mortar-board' } }
     ])
+    // The "next question" palette entry belongs to the notes views, so it exists only when GET /meta says notes are on.
+    try {
+      Promise.resolve(ctx.rest('/meta')).then(
+        m => {
+          if (CTX !== ctx || !m || !m.features || m.features.notes !== true) return
+          ctx.registerMany([
+            {
+              id: 'next',
+              area: PALETTE_AREA,
+              data: {
+                id: 'codecoach.next',
+                label: 'CodeCoach: next question',
+                keywords: ['codecoach', 'practice', 'question', 'quiz', 'study'],
+                run: () => {
+                  pending.next = true
+                  host.navigate('/codecoach')
+                  bus.emit('next')
+                }
+              }
+            }
+          ])
+        },
+        () => {}
+      )
+    } catch (_e) {
+      /* no meta, no palette entry */
+    }
     // Push updates from the backend; polling in the views is the fallback.
     // ctx.onEvent is tracked by the host and removed on unload.
     ctx.onEvent('plugin.codecoach.job.progress', ev => bus.emit('job', ev && ev.payload ? ev.payload : ev))

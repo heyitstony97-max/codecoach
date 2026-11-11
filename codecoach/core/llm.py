@@ -43,6 +43,11 @@ class LLMPort(Protocol):
         """Plain text completion. messages = [{"role": "system"|"user"|"assistant", "content": str}]."""
         ...
 
+    def last_route(self) -> dict | None:
+        """{"provider": str, "model": str} of the model that answered the most recent call, or None when
+        nothing has answered yet or the host did not say."""
+        ...
+
 
 M = TypeVar("M", bound=BaseModel)
 
@@ -153,6 +158,13 @@ class FakeLLM:
         self._script_callable = callable(script)
         self._text_callable = callable(text_script)
         self.calls: list[FakeCall] = []
+        self.route: dict | None = None      # tests set this (or call set_route) to change the reported model
+
+    def set_route(self, provider: str | None, model: str | None = None) -> None:
+        self.route = None if provider is None else {"provider": provider, "model": model or ""}
+
+    def last_route(self) -> dict | None:
+        return dict(self.route) if self.route else None
 
     # -- helpers
     @property

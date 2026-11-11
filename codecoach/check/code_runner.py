@@ -1,4 +1,4 @@
-"""Sandboxed runner for Python 3 and C exercises (stdlib only).
+"""Sandboxed runner for code exercises in every language of `codecoach.lang` (stdlib only).
 
 Sandbox = bubblewrap (`bwrap`): no network, no pid/ipc/uts view of the host, read-only system dirs, a
 tmpfs /tmp, and a work dir. Compile runs with the work dir read-write; tests run with it read-only (a
@@ -7,9 +7,15 @@ Plain `unshare -rn` is not used: AppArmor blocks unprivileged user namespaces on
 allowed.
 
 Limits (preexec_fn rlimits + a wall clock): RLIMIT_CPU, RLIMIT_AS (bigger for compiling than running),
-RLIMIT_NPROC (current process count of this user + headroom, because the kernel counts per real uid),
-RLIMIT_FSIZE. The child runs in its own process group, and a timeout kills the group. stdout/stderr go to
-files (never pipes), so output volume cannot stall or exhaust us; the files are read back truncated.
+RLIMIT_FSIZE, and a process limit (RLIMIT_NPROC). The process limit is set INSIDE the sandbox where the kernel
+counts it per user namespace (Linux 5.14 and later; see `nproc_inside`), so it bounds the sandbox's own tasks and
+nothing else on the machine can use it up. Where that does not hold it is set from outside as the user's current
+task count plus headroom, as in v1.0. The child runs in its own process group, and a timeout kills the group.
+stdout/stderr go to files (never pipes), so output volume cannot stall or exhaust us; the files are read back
+truncated.
+
+File names, compile and run commands, extra read-only binds and per-language limits come from the language's
+`LangSpec` and discovered toolchain (`codecoach/lang/`). Python and C keep exactly their v1.0 commands and limits.
 
 Public API:
     sandbox_status() -> "bwrap" | "unavailable"
@@ -37,6 +43,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from codecoach import lang
 from codecoach.core.models import CodePayload, CodeTest, PerTestResult
 from codecoach.core.registry import CheckResult
 
@@ -48,7 +55,7 @@ COMPILE_CPU_S = 30
 COMPILE_AS = 3 * 1024 ** 3
 COMPILE_FSIZE = 64 * 1024 ** 2
 RUN_FSIZE = 4 * 1024 ** 2       # also caps the stdout/stderr capture files
-NPROC_HEADROOM = 96             # processes the sandboxed run may add on top of what the user already has
+NPROC_HEADROOM = 96             # processes and threads one sandboxed run may have (see nproc_inside)
 COMPILE_NPROC_HEADROOM = 160
 ERROR_LINES = 20
 
@@ -76,10 +83,12 @@ class CodeResult(CheckResult):
 _status_cache: str | None = None
 
 
-def _bwrap_base() -> list[str]:
-    """The fixed part of every bwrap command line (no work dir yet)."""
+def _bwrap_base(extra_ro: tuple[str, ...] = ()) -> list[str]:
+    """The fixed part of every bwrap command line (no work dir yet). `extra_ro`: a toolchain's own root."""
     argv = ["bwrap", "--unshare-all", "--die-with-parent", "--new-session"]
     for d in _SYSTEM_BINDS:
+        argv += ["--ro-bind", d, d]
+    for d in extra_ro:
         argv += ["--ro-bind", d, d]
     for target, link in _SYSTEM_LINKS:
         if not os.path.lexists(link) or os.path.islink(link):
@@ -143,14 +152,69 @@ def _user_process_count() -> int:
     return n
 
 
-def _limits(cpu_s: int, as_bytes: int, nproc: int, fsize: int):
+def _limits(cpu_s: int, as_bytes: int, nproc: int | None, fsize: int):
+    """`nproc` None: the process limit is set inside the sandbox instead (see nproc_inside)."""
     def apply() -> None:
         resource.setrlimit(resource.RLIMIT_CPU, (cpu_s, cpu_s + 1))
         resource.setrlimit(resource.RLIMIT_AS, (as_bytes, as_bytes))
-        resource.setrlimit(resource.RLIMIT_NPROC, (nproc, nproc))
+        if nproc is not None:
+            resource.setrlimit(resource.RLIMIT_NPROC, (nproc, nproc))
         resource.setrlimit(resource.RLIMIT_FSIZE, (fsize, fsize))
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     return apply
+
+
+# --------------------------------------------------------------------------- where the process limit is set
+
+PRLIMIT = "/usr/bin/prlimit"            # util-linux. /usr inside the sandbox is the host's /usr, read-only
+_SELFTEST_PY = "/usr/bin/python3"
+_SELFTEST_CAP = 24
+# Forks up to 60 children that wait on a pipe (they end when this program does) and prints how many forks worked.
+_SELFTEST = ("import os\nr, w = os.pipe()\nn = 0\nfor _ in range(60):\n    try:\n        pid = os.fork()\n"
+             "    except OSError:\n        break\n    if pid == 0:\n        os.close(w)\n        os.read(r, 1)\n"
+             "        os._exit(0)\n    n += 1\nprint(n)\n")
+_nproc_inside_cache: bool | None = None
+
+
+def _nproc_selftest() -> int | None:
+    """How many forks a program managed inside the sandbox under a process limit of _SELFTEST_CAP set inside it.
+    None when the test could not run (no sandbox, no prlimit, no python3 under /usr, or it did not finish)."""
+    if sandbox_status() != "bwrap" or not (os.path.isfile(PRLIMIT) and os.path.isfile(_SELFTEST_PY)):
+        return None
+    argv = _bwrap_base() + ["--setenv", "PATH", "/usr/bin:/bin", PRLIMIT, f"--nproc={_SELFTEST_CAP}:{_SELFTEST_CAP}",
+                            "--", _SELFTEST_PY, "-I", "-S", "-c", _SELFTEST]
+    try:
+        proc = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                process_group=0, close_fds=True, preexec_fn=_limits(5, 512 * 1024 ** 2, None, 1024 ** 2))
+    except (OSError, subprocess.SubprocessError):
+        return None
+    try:
+        out, _ = proc.communicate(timeout=10)
+    except subprocess.TimeoutExpired:
+        out = b""
+    finally:
+        _kill_group(proc)
+        proc.wait()
+    try:
+        return int(out.decode("ascii", "replace").strip())
+    except ValueError:
+        return None
+
+
+def nproc_inside(*, refresh: bool = False) -> bool:
+    """True when the process limit can be set inside the sandbox and then counts only the sandbox's own tasks.
+
+    Linux 5.14 and later count RLIMIT_NPROC per user namespace, so a limit set after bwrap has made its namespace
+    bounds that sandbox alone. Set from outside (the only way on older kernels) it is checked against every task
+    the user has: a busy desktop, or a few sandboxes side by side, can then make a correct program fail to start
+    ("Resource temporarily unavailable"). Decided once per process by a test in the real sandbox: under a limit of
+    24 a program must manage at least one fork and must be stopped before 24. Any other answer (an old kernel
+    refuses the first fork, root is never stopped, the test cannot run) keeps the outside limit."""
+    global _nproc_inside_cache
+    if _nproc_inside_cache is None or refresh:
+        n = _nproc_selftest()
+        _nproc_inside_cache = n is not None and 1 <= n < _SELFTEST_CAP
+    return _nproc_inside_cache
 
 
 def _read_capped(path: str) -> tuple[str, bool]:
@@ -181,8 +245,13 @@ def _kill_group(proc: subprocess.Popen) -> None:
 
 
 def _run(cmd: list[str], *, workdir: str, sandboxed: bool, rw_work: bool, stdin_text: str, wall_s: float,
-         cpu_s: int, as_bytes: int, fsize: int, nproc_headroom: int) -> RunOut:
-    """Run `cmd` (paths as seen inside: /work/... when sandboxed, real paths otherwise)."""
+         cpu_s: int, as_bytes: int, fsize: int, nproc_headroom: int, extra_ro: tuple[str, ...] = (),
+         rw_cache: str | None = None, env_extra: dict[str, str] | None = None) -> RunOut:
+    """Run `cmd` (paths as seen inside: /work/... when sandboxed, real paths otherwise).
+
+    `extra_ro`: read-only binds (a toolchain's own root); `rw_cache`: the ONE extra read-write dir, mounted at
+    /cache (compile steps only); `env_extra`: environment on top of the fixed one."""
+    assert as_bytes <= lang.AS_CEILING_MB * 1024 ** 2, "RLIMIT_AS is never above 4 GiB"
     scratch = tempfile.mkdtemp(prefix="codecoach-io-", dir=None)
     try:
         in_path = os.path.join(scratch, "stdin")
@@ -190,22 +259,27 @@ def _run(cmd: list[str], *, workdir: str, sandboxed: bool, rw_work: bool, stdin_
         err_path = os.path.join(scratch, "stderr")
         with open(in_path, "w", encoding="utf-8") as f:
             f.write(stdin_text)
+        inside = sandboxed and nproc_inside()
         if sandboxed:
-            argv = _bwrap_base()
-            for k, v in _ENV.items():
+            argv = _bwrap_base(extra_ro)
+            for k, v in {**_ENV, **(env_extra or {})}.items():
                 argv += ["--setenv", k, v]
+            if rw_cache:
+                argv += ["--bind", rw_cache, "/cache"]
             argv += ["--bind" if rw_work else "--ro-bind", workdir, "/work",
                      "--chdir", "/work" if rw_work else "/tmp"]
+            if inside:          # the first thing in the sandbox caps its own task count, then becomes the command
+                argv += [PRLIMIT, f"--nproc={nproc_headroom}:{nproc_headroom}", "--"]
             argv += cmd
             cwd = None
         else:
             argv = cmd
             cwd = workdir
-        nproc = _user_process_count() + nproc_headroom
+        nproc = None if inside else _user_process_count() + nproc_headroom
         t0 = time.monotonic()
         with open(in_path, "rb") as fin, open(out_path, "wb") as fout, open(err_path, "wb") as ferr:
             proc = subprocess.Popen(
-                argv, stdin=fin, stdout=fout, stderr=ferr, cwd=cwd, env=None if sandboxed else _plain_env(),
+                argv, stdin=fin, stdout=fout, stderr=ferr, cwd=cwd, env=None if sandboxed else {**_plain_env(), **(env_extra or {})},
                 process_group=0, close_fds=True,
                 preexec_fn=_limits(cpu_s, as_bytes, nproc, fsize))
             timed_out = False
@@ -297,6 +371,15 @@ def _ubsan_works() -> bool:
 
 # --------------------------------------------------------------------------- one grading session
 
+def _env_pairs(pairs: tuple[tuple[str, str], ...], **vals: str) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for k, v in pairs:
+        for name, val in vals.items():
+            v = v.replace("{" + name + "}", val)
+        out[k] = v
+    return out
+
+
 class _Session:
     """One temp dir, one learner submission, many tests."""
 
@@ -308,9 +391,12 @@ class _Session:
         os.chmod(self.wd, 0o755)
         self.root = "/work" if sandboxed else self.wd
         self.lang = payload.language
+        self.spec = lang.spec(self.lang)
+        self.tc = lang.toolchain_for(self.lang)
         self._bins: dict[str, str | None] = {}
         self._errors: dict[str, str] = {}
         self.compile_error: str | None = None
+        self._cache = lang.build_cache_dir(self.spec) if self.tc is not None else None
 
     def close(self) -> None:
         shutil.rmtree(self.wd, ignore_errors=True)
@@ -322,51 +408,104 @@ class _Session:
     def _write(self, name: str, text: str) -> None:
         Path(self.wd, name).write_text(text, encoding="utf-8")
 
-    def _py(self) -> str:
-        return "/usr/bin/python3" if self.sandboxed else (shutil.which("python3") or sys.executable)
+    @property
+    def _hide(self) -> tuple[str, ...]:
+        """Host paths to strip from anything shown to the learner."""
+        return (self.wd, self.tc.root or "") if self.tc is not None else (self.wd,)
 
-    def _gcc(self) -> str:
-        return "/usr/bin/gcc" if self.sandboxed else (shutil.which("gcc") or "gcc")
+    # -- command building
+    def _expand(self, tmpl: tuple[str, ...], *, sources: list[str] | None = None, src: str | None = None,
+                out: str | None = None, mem_mb: int = 0, flags: tuple[str, ...] = ()) -> list[str]:
+        assert self.tc is not None
+        names = dict(self.tc.exes)
+        names.update({"src": src or self._in(self.spec.source_name), "out": out or self._in("prog_main"),
+                      "dir": self.root, "mem_mb": str(mem_mb), "cache": "/cache" if self.sandboxed
+                      else (self._cache or "")})
+        argv: list[str] = []
+        for item in tmpl:
+            if item == "{sources}":
+                argv += sources or [self._in(self.spec.source_name)]
+            elif item == "{flags}":
+                argv += flags
+            else:
+                for k, v in names.items():
+                    item = item.replace("{" + k + "}", v)
+                argv.append(item)
+        return argv
+
+    def _binds(self) -> tuple[str, ...]:
+        if self.tc is None or not self.sandboxed:
+            return ()
+        return tuple(b for b in ((self.tc.root,) if self.tc.root else ()) + self.tc.extra_ro)
+
+    def _env(self, which: str, mem_mb: int = 0) -> dict[str, str]:
+        extra = self.spec.compile_env if which == "compile" else self.spec.run_env
+        cache = "/cache" if self.sandboxed else (self._cache or "")
+        return _env_pairs(self.spec.env + extra, cache=cache, mem_mb=str(mem_mb))
 
     def _compile_run(self, cmd: list[str]) -> RunOut:
+        lim = self.spec.limits
         return _run(cmd, workdir=self.wd, sandboxed=self.sandboxed, rw_work=True, stdin_text="",
-                    wall_s=COMPILE_WALL_S, cpu_s=COMPILE_CPU_S, as_bytes=COMPILE_AS, fsize=COMPILE_FSIZE,
-                    nproc_headroom=COMPILE_NPROC_HEADROOM)
+                    wall_s=lim.compile_wall_s, cpu_s=COMPILE_CPU_S + lim.cpu_extra_s,
+                    as_bytes=min(lim.compile_as_mb, lang.AS_CEILING_MB) * 1024 ** 2, fsize=COMPILE_FSIZE,
+                    nproc_headroom=lim.compile_nproc, extra_ro=self._binds(),
+                    rw_cache=self._cache if (self.sandboxed and self.spec.cache_name) else None,
+                    env_extra=self._env("compile"))
+
+    def run_budget(self, mem_mb: int) -> tuple[int, int]:
+        """(address-space bytes, runtime heap MB) for a run with `mem_mb` of memory. AS is finite, <= 4 GiB."""
+        mem_mb = max(32, int(mem_mb))
+        over = self.spec.limits.overhead_mb
+        as_mb = min(lang.AS_CEILING_MB, mem_mb + over)
+        return as_mb * 1024 ** 2, max(16, min(mem_mb, as_mb - over)) if over else mem_mb
+
+    def run_cmd(self, key: str, mem_mb: int, src: str | None = None) -> tuple[list[str], dict[str, str]]:
+        _, heap = self.run_budget(mem_mb)
+        out = self._in(f"prog_{key}")
+        return self._expand(self.spec.run, src=src, out=out, mem_mb=heap), self._env("run", heap)
+
+    def run_one(self, cmd: list[str], env: dict[str, str], *, stdin_text: str, wall_s: float, mem_mb: int) -> RunOut:
+        lim = self.spec.limits
+        as_bytes, _ = self.run_budget(mem_mb)
+        return _run(cmd, workdir=self.wd, sandboxed=self.sandboxed, rw_work=False, stdin_text=stdin_text,
+                    wall_s=wall_s, cpu_s=int(math.ceil(wall_s)) + 1 + lim.cpu_extra_s, as_bytes=as_bytes,
+                    fsize=RUN_FSIZE, nproc_headroom=lim.run_nproc, extra_ro=self._binds(), env_extra=env)
 
     # -- preparing artifacts: returns the command to execute (or None + error)
     def prepare_main(self) -> bool:
-        """Stdio form needs the learner's program. Python: syntax check. C: compile."""
-        if self.lang == "python":
-            self._write("solution.py", self.code)
+        """Stdio form needs the learner's program. Interpreted: syntax check. Compiled: compile."""
+        self._write(self.spec.source_name, self.code)
+        if not self.spec.compiled:
             return self._syntax_check()
-        self._write("solution.c", self.code)
-        return self._compile_c("main", ["solution.c"]) is not None
+        return self._compile("main", [self._in(self.spec.source_name)]) is not None
 
     def _syntax_check(self) -> bool:
         if "py_ok" in self._bins:
             return self._bins["py_ok"] is not None
-        self._write("solution.py", self.code)
-        r = self._compile_run([self._py(), "-B", "-c",
-                               "import sys;compile(open(sys.argv[1],encoding='utf-8').read(),sys.argv[1],'exec')",
-                               self._in("solution.py")])
+        self._write(self.spec.source_name, self.code)
+        if self.spec.check is None:
+            self._bins["py_ok"] = "ok"
+            return True
+        r = self._compile_run(self._expand(self.spec.check))
         if r.returncode != 0:
-            self.compile_error = _readable_error(r.stderr or r.stdout, self.wd) or "Syntax error"
+            self.compile_error = _readable_error(r.stderr or r.stdout, *self._hide) or "Syntax error"
             self._bins["py_ok"] = None
             return False
         self._bins["py_ok"] = "ok"
         return True
 
-    def _compile_c(self, key: str, sources: list[str]) -> str | None:
+    def _compile(self, key: str, sources: list[str]) -> str | None:
         if key in self._bins:
             return self._bins[key]
-        flags = list(C_FLAGS)
-        if _ubsan_works():
-            flags += UBSAN_FLAGS
+        assert self.spec.compile is not None
+        flags: tuple[str, ...] = ()
+        if self.spec.optional_flags and _ubsan_works():
+            flags = self.spec.optional_flags
         out = f"prog_{key}"
-        r = self._compile_run([self._gcc(), *flags, *[self._in(s) for s in sources], "-o", self._in(out), "-lm"])
+        r = self._compile_run(self._expand(self.spec.compile, sources=sources, out=self._in(out), flags=flags))
         if r.returncode != 0:
             raw = r.stderr or r.stdout
-            msg = _readable_error(raw, self.wd)
+            msg = _readable_error(raw, *self._hide)
             if re.search(r"multiple definition of .?main", raw) and len(sources) > 1:
                 msg = ("Remove your main(); the tests provide one. Keep only the functions the exercise "
                        "asks for.\n" + msg)
@@ -384,34 +523,35 @@ class _Session:
     def run_test(self, t: CodeTest, idx: int, visible: bool) -> PerTestResult:
         p = self.p
         wall = max(0.2, float(p.time_limit_s))
-        cpu = int(math.ceil(wall)) + 1
-        mem = max(32, int(p.mem_mb)) * 1024 ** 2
         if t.harness is not None:
+            if self.spec.harness is None:
+                return PerTestResult(name=t.name, passed=False, visible=visible,
+                                     detail=f"{self.spec.name} exercises are checked through input and output.")
             cmd = self._harness_cmd(t, idx)
             if cmd is None:
                 return PerTestResult(name=t.name, passed=False, visible=visible,
                                      detail=self._test_compile_message(f"h{idx}", visible))
             stdin = ""
         else:
-            if self.lang == "python":
+            if not self.spec.compiled:
                 if not self._syntax_check():
                     return PerTestResult(name=t.name, passed=False, visible=visible,
                                          detail=("Syntax error:\n" + (self.compile_error or "")) if visible
                                          else "Syntax error")
-                self._write("solution.py", self.code)
-                cmd = [self._py(), "-B", self._in("solution.py")]
+                self._write(self.spec.source_name, self.code)
+                cmd, env = self.run_cmd("main", p.mem_mb)
             else:
-                bin_ = self._compile_c("main", ["solution.c"]) if "solution.c" in os.listdir(self.wd) else None
-                if "solution.c" not in os.listdir(self.wd):
-                    self._write("solution.c", self.code)
-                    bin_ = self._compile_c("main", ["solution.c"])
+                if "main" not in self._bins:
+                    self._write(self.spec.source_name, self.code)
+                bin_ = self._compile("main", [self._in(self.spec.source_name)])
                 if bin_ is None:
                     return PerTestResult(name=t.name, passed=False, visible=visible,
                                          detail=self._test_compile_message("main", visible))
-                cmd = [bin_]
+                cmd, env = self.run_cmd("main", p.mem_mb)
             stdin = t.stdin
-        r = _run(cmd, workdir=self.wd, sandboxed=self.sandboxed, rw_work=False, stdin_text=stdin, wall_s=wall,
-                 cpu_s=cpu, as_bytes=mem, fsize=RUN_FSIZE, nproc_headroom=NPROC_HEADROOM)
+        if t.harness is not None:
+            env = self.run_cmd("main", p.mem_mb)[1]
+        r = self.run_one(cmd, env, stdin_text=stdin, wall_s=wall, mem_mb=p.mem_mb)
         return self._judge(t, r, visible)
 
     def _test_compile_message(self, key: str, visible: bool) -> str:
@@ -420,21 +560,22 @@ class _Session:
 
     def _harness_cmd(self, t: CodeTest, idx: int) -> list[str] | None:
         assert t.harness is not None
-        if self.lang == "python":
+        hname = f"harness_{idx}{self.spec.harness_ext}"
+        if self.spec.harness == "script":
             if not self._syntax_check():
                 self._errors[f"h{idx}"] = self.compile_error or ""
                 return None
-            self._write("solution.py", self.code)
-            self._write(f"harness_{idx}.py", t.harness)
-            return [self._py(), "-B", self._in(f"harness_{idx}.py")]
-        self._write("solution.c", self.code)
-        self._write(f"harness_{idx}.c", t.harness)
-        bin_ = self._compile_c(f"h{idx}", ["solution.c", f"harness_{idx}.c"])
+            self._write(self.spec.source_name, self.code)
+            self._write(hname, t.harness)
+            return self.run_cmd("main", self.p.mem_mb, src=self._in(hname))[0]
+        self._write(self.spec.source_name, self.code)
+        self._write(hname, t.harness)
+        bin_ = self._compile(f"h{idx}", [self._in(self.spec.source_name), self._in(hname)])
         return None if bin_ is None else [bin_]
 
     def _judge(self, t: CodeTest, r: RunOut, visible: bool) -> PerTestResult:
         out = r.stdout
-        err = _readable_error(r.stderr, self.wd)
+        err = _readable_error(r.stderr, *self._hide)
         def mk(**kw: Any) -> PerTestResult:
             return PerTestResult(name=t.name, visible=visible, time_ms=r.time_ms, **kw)
 
@@ -486,6 +627,9 @@ def _execute(payload: CodePayload, code: str, include_hidden: bool, allow_unsand
         return CodeResult(ok=False, score=0.0, detail="No code to run.", passed=0, total=total,
                           per_test=[PerTestResult(name=t.name, passed=False, visible=v, detail="No code submitted")
                                     for t, v in tests])
+    if lang.toolchain_for(payload.language) is None:
+        return CodeResult(ok=False, score=0.0, detail=lang.not_ready_reason(payload.language), undecided=True,
+                          per_test=None, passed=0, total=total)
     sess = _Session(payload, code, sandboxed)
     try:
         # Learner code is compiled up front when any stdio test exists (a compile error then stops early).
@@ -511,7 +655,7 @@ def _execute(payload: CodePayload, code: str, include_hidden: bool, allow_unsand
 
 def _compile_failed(sess: _Session, tests: list[tuple[CodeTest, bool]], total: int) -> CodeResult:
     msg = sess.compile_error or "Compilation failed"
-    label = "Syntax error" if sess.lang == "python" else "Compile error"
+    label = "Compile error" if sess.spec.compiled else "Syntax error"
     per = [PerTestResult(name=t.name, passed=False, visible=v, detail=label) for t, v in tests]
     return CodeResult(ok=False, score=0.0, detail=f"{label}:\n{msg}", per_test=per, passed=0, total=total,
                       compile_error=msg)
@@ -562,17 +706,14 @@ def run_snippet(language: str, code: str, stdin: str = "", *, time_limit_s: floa
         return None
     payload = CodePayload(language=language, starter="", visible_tests=[CodeTest(name="x", stdin=stdin,
                           expected_stdout="")], reference_solution="-", time_limit_s=time_limit_s, mem_mb=mem_mb)
+    if lang.toolchain_for(language) is None:
+        return SnippetResult(False, "", "", None, False, lang.not_ready_reason(language))
     sess = _Session(payload, code, sandboxed)
     try:
         if not sess.prepare_main():
             return SnippetResult(False, "", "", None, False, sess.compile_error)
-        if language == "python":
-            cmd = [sess._py(), "-B", sess._in("solution.py")]
-        else:
-            cmd = [sess._bins["main"]]  # type: ignore[list-item]
-        r = _run(cmd, workdir=sess.wd, sandboxed=sandboxed, rw_work=False, stdin_text=stdin,
-                 wall_s=time_limit_s, cpu_s=int(math.ceil(time_limit_s)) + 1, as_bytes=mem_mb * 1024 ** 2,
-                 fsize=RUN_FSIZE, nproc_headroom=NPROC_HEADROOM)
+        cmd, env = sess.run_cmd("main", mem_mb)
+        r = sess.run_one(cmd, env, stdin_text=stdin, wall_s=time_limit_s, mem_mb=mem_mb)
         return SnippetResult(r.returncode == 0 and not r.timed_out, r.stdout, r.stderr, r.returncode,
                              r.timed_out, None, r.time_ms)
     finally:

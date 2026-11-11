@@ -1,52 +1,61 @@
-# Demo script (target 80 s, hard cap 85 s)
+# Demo script for version 1.1 (target 80 s, hard cap 85 s; the rule is under 90)
 
-Five beats, screen recording of Hermes Desktop with the CodeCoach page, voice-over by Anthony. Do the pre-build in [RESET.md](RESET.md) first: on a local model a plan takes about a minute and each step one to three minutes, so the video never waits on the model. Start the demo project before recording and record the planning wait as a short separate clip; say "I started this a minute ago" rather than pretending it is instant.
+One continuous take, no cuts, screen recording of Hermes Desktop with the CodeCoach page, voice-over by Anthony. Nothing in it waits on a model: the project is the ready-made one, and the drill and the model check are prepared before recording (see [RESET.md](RESET.md)).
 
 Window 1280x800, dark theme, CodeCoach page full-width. Cursor visible. No emoji, no handles on screen.
 
 | # | Time | Beat |
 |---|------|------|
-| 1 | 0-10 s | The idea |
-| 2 | 10-35 s | Step 1: a lesson, an example that really ran, a wrong answer |
-| 3 | 35-55 s | A hint, the fix, Check step, the next step is already built |
-| 4 | 55-70 s | Why you can trust it |
-| 5 | 70-80 s | You built it |
+| 1 | 0-8 s | Sixteen languages, pick Rust |
+| 2 | 8-20 s | Start: a lesson and an example that really ran |
+| 3 | 20-45 s | A wrong program, the real diff, the fix, green |
+| 4 | 45-60 s | Practice: predict the output |
+| 5 | 60-72 s | The model check |
+| 6 | 72-80 s | Close |
 
-## Beat 1 (0-10 s): the idea
+## Beat 1 (0-8 s): sixteen languages, pick Rust
 
-- Start on **Projects** (the first tab). Click the idea chip **Number-guessing game** (or type it), keep **C**, press **Start**. Cut to the project already planned (RESET.md built it).
-- Expected: the step rail on the left with the plan's steps (4 to 8), step 1 open.
-- Narration (about 9 s): "I'm learning C at night. So I built a tutor that teaches me by building a real program with me, one small step at a time."
+- Start on **Build**. The language list is on screen with each compiler's version and a fit badge.
+- Click **Rust**. The button on the Grade book card now reads **Start in Rust**, and the line under the list reads "Rust <version>, proven in the sandbox on this machine."
+- Narration (about 8 s): "I'm teaching myself to program. CodeCoach is a Hermes plugin that teaches any of sixteen languages my machine can run. Tonight, Rust."
 
-## Beat 2 (10-35 s): lesson, a real example, a wrong answer
+## Beat 2 (8-20 s): Start, a lesson, an example that really ran
 
-- Step 1 open. Pause on **Tutor's explanation** (2 s), then on the example card labelled **Ran in CodeCoach's sandbox** with its output (2 s).
-- Scroll to **Your task** and **Tests your code must pass** (input -> expected output). The task quotes the exact output.
-- In **Your code**, type a version with one deliberate mistake (it is in RESET.md: wrong wording or a missing newline). Press **Ctrl+Enter**.
-- Expected: the run result shows the failing test with expected next to what the program printed.
-- Narration (about 22 s): "Every step teaches one idea. The example isn't the model guessing what it prints: CodeCoach actually ran it, and that's the real output. Then it's my turn. The tests come first, and when I get it wrong, it shows me exactly what my program printed against what it should."
+- Press **Start in Rust**. The first lesson opens in a second or two. Do not cut the wait: it is the point.
+- Pause on **Tutor's explanation** (2 s), then on the example labelled **Ran in CodeCoach's sandbox** with its input and output (2 s).
+- Narration (about 11 s): "No waiting. Every step teaches one idea, and the example isn't a model guessing what it prints: CodeCoach compiled it and ran it, and that's the real output."
 
-## Beat 3 (35-55 s): hint, fix, Check step
+## Beat 3 (20-45 s): wrong, the real diff, the fix, green
 
-- Click **Hint (3 left)**. Expected: a nudge that does not contain the answer.
-- Fix the mistake, press **Check step**. Expected: hidden tests run, **Step done**, and **Next step** (already built while you worked; if it still says "Building the next step...", wait off camera and cut).
-- Click **Next step** once to show step 2 opening with your own code carried over.
-- Narration (about 18 s): "Hints nudge, they never hand me the answer. Check step runs hidden tests too. Pass, and the next step is already waiting: CodeCoach built it in the background while I was coding."
+- Scroll to **Tests your code must pass** and **Your code**.
+- Replace the code with the cheat from RESET.md (it prints `Score: 85` whatever the input is). Press **Ctrl+Enter**.
+- Expected: **1 of 2 passing**. The failing test shows expected `Score: 0` next to got `Score: 85`.
+- Paste the real program from RESET.md. Press **Check step**.
+- Expected: **4 of 4 passing** (two of them were hidden until now) and **Next step**.
+- Narration (about 23 s): "Now me. I'll cheat and hard-code the answer. One test passes, one fails, and it shows exactly what I printed against what it wanted. So I read the input properly. Check step runs hidden tests too. Four of four."
 
-## Beat 4 (55-70 s): why you can trust it
+## Beat 4 (45-60 s): Practice
 
-- Cut to the README's table **The checks every step must pass** (scroll slowly) or hold on the step screen.
-- Narration (about 14 s): "Before I see any step, CodeCoach's own hidden solution has to pass every test in a sandbox, the step has to ask for something new, and any hint that leaks the answer is thrown out. Code checks it, not the model."
+- Click **Practice**, then **Loops** (the drill is already built, see RESET.md). A short Rust program appears with "Type exactly what this program prints".
+- Type your prediction and press **Ctrl+Enter**.
+- Expected: your lines next to the real ones, and the output labelled **Ran in CodeCoach's sandbox**.
+- Narration (about 13 s): "Practice is reading code. I predict what it prints, and the answer key isn't the model's opinion. It's what the program printed when CodeCoach ran it."
 
-## Beat 5 (70-80 s): you built it
+## Beat 5 (60-72 s): the model check
 
-- Cut to the finished project from RESET.md: **You built it**, the concepts you used, **Download your program**. Click download, then show the file running in a terminal for 3 s (`gcc` it and run it with an input).
-- Narration (about 9 s): "At the end, it's my program, written by me, and it runs. CodeCoach is a Hermes plugin, and it runs on a local model on my desk."
-- End card (2 s): "CodeCoach, a Hermes plugin", plain text. No handles on screen (they go in the post, not the video).
+- Click **Build**, then click the fit badge on the Rust row (or on the weakest language in your list).
+- Expected: five warm-ups with passed or failed, the model's name, when it was measured, and for a Mixed or Weak result the lines on how to point CodeCoach at another model.
+- Narration (about 11 s): "And it checks the model too. Five small programs per language, run in the sandbox. If my model is weak in a language, it says so and shows me how to switch."
+
+## Beat 6 (72-80 s): close
+
+- Click **Test** and hold on it.
+- Narration (about 7 s): "Build, practice, test. Real code, real output, sixteen languages. CodeCoach, for Hermes."
+- No end card is needed in a single take. No handles on screen (they go in the post, not the video).
 
 ## Notes
 
-- Total spoken text is about 72 s at a calm pace; trim beat 4 first if a take runs long.
-- Every number said aloud must be read off the screen on that take.
-- The step texts differ from build to build (the model writes them). Rehearse on the project you will record, and read what is on screen rather than a fixed line.
-- The final post (X, tagging @NousResearch) and the Typeform are Anthony's.
+- Spoken text is about 73 s at a calm pace. If a take runs long, drop beat 6's click and say the last line over beat 5.
+- Every number said aloud must be on the screen on that take. If your machine has fewer than sixteen languages set up, say the number your list shows.
+- Read the badge that is on screen in beat 5; do not promise a result the take does not show.
+- The post on X (tagging @NousResearch) and the form are Anthony's.

@@ -1,7 +1,7 @@
 name: codecoach
-version: "1.0.0"
+version: "1.1.0"
 manifest_version: 2
-description: Learn to code by building a real program, one small step at a time. Every example really ran, every pass is a real test, and hints never give away the answer.
+description: Teach yourself to code in C, C++, Python, JavaScript, Java, Go, Rust, Ruby or Bash. Build a real program one small step at a time, practice by predicting what code prints, and take no-hints tests. Every example really ran in a sandbox, every pass is a real test, and it warns you when your model is weak in a language.
 author: Anthony Taylor
 license: MIT
 requires_hermes: ">=0.22.7"
@@ -15,7 +15,7 @@ provides_tools:
   - codecoach_ask
 python_dependencies:
   - "sympy>=1.12,<1.15"
-tags: [education, programming, tutor, learning, c, python]
+tags: [education, programming, tutor, learning, c, cpp, python, javascript, java, go, rust, ruby, bash]
 config_schema:
   default_mode:
     type: str
@@ -38,3 +38,13 @@ config_schema:
     default: 600
     label: Model timeout (seconds)
     description: Seconds to wait for each model call; local models need minutes
+  show_notes:
+    type: bool
+    default: false
+    label: Show the notes courses
+    description: Bring back the v1.0 screens that build a course from your own notes. Off by default; CodeCoach is a coding tutor.
+  auto_fit_check:
+    type: bool
+    default: true
+    label: Check the model in each language
+    description: The first time your model writes a lesson or a drill in a language, CodeCoach also asks it for five small warm-up programs and runs them, so it can warn you when the model is weak in that language. Turn off to run that check only when you press Check.

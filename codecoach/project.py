@@ -15,6 +15,7 @@ Server-only step fields (reference_solution, hidden_tests, hints) never leave th
 
 from __future__ import annotations
 
+import contextlib
 import difflib
 import re
 import secrets
@@ -23,6 +24,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
+from codecoach import lang, starters
 from codecoach.adapt.mastery import iso
 from codecoach.check.code_runner import check_reference, grade, run_snippet, run_visible, sandbox_status
 from codecoach.core.llm import LLMBadOutput, LLMError, LLMUnavailable, structured_call
@@ -39,11 +41,41 @@ MAX_RETRIES = 2                         # G1-G5: retries of the whole step call,
 MAX_CODE_CHARS = 8000
 MAX_TEXT = 1500
 IDEA_MIN, IDEA_MAX = 3, 300
-LANGUAGES = ("c", "python")
+LEGACY_LANGUAGES = ("c", "python")      # v1.0 languages: their prompts and line rules stay byte-for-byte what they were
 _BUILD_LOCK = threading.Lock()          # one model build at a time across all projects (one shared GPU)
 
-STARTERS = {"c": "#include <stdio.h>\n\nint main(void)\n{\n    return 0;\n}\n",
-            "python": "# Your program starts here\n"}
+
+def starter_for(language: str) -> str:
+    """The empty program a project of this language starts from (from the language's LangSpec)."""
+    try:
+        return lang.spec(language).starter
+    except lang.UnknownLanguage:
+        return ""
+
+
+def ext_for(language: str) -> str:
+    """The download extension without the dot ('c', 'py', 'rs'), from the language's LangSpec."""
+    try:
+        return lang.spec(language).ext.lstrip(".")
+    except lang.UnknownLanguage:
+        return "txt"
+
+
+def language_name(language: str) -> str:
+    try:
+        return lang.spec(language).name
+    except lang.UnknownLanguage:
+        return str(language)
+
+
+class _Starters:
+    """`STARTERS[id]`, kept for older callers: it reads the LangSpec."""
+
+    def __getitem__(self, language: str) -> str:
+        return lang.spec(language).starter
+
+
+STARTERS = _Starters()
 
 IDEAS = [
     {"title": "Number-guessing game", "language": "c",
@@ -58,6 +90,22 @@ IDEAS = [
      "pitch": "Paste some text and see how many lines and words it has."},
     {"title": "Palindrome checker", "language": "python",
      "pitch": "Type a word and it tells you whether it reads the same backwards."},
+    # v1.1: at least one per Tier A language. All are deterministic stdin -> stdout programs; the screen may pair
+    # any idea with the language the learner picked.
+    {"title": "Vowel counter", "language": "cpp",
+     "pitch": "Type a line and it tells you how many vowels it has."},
+    {"title": "Tip calculator", "language": "javascript",
+     "pitch": "Type a bill and a tip percentage; it prints the tip and the total."},
+    {"title": "Grade book", "language": "java",
+     "pitch": "Type some scores and get the average and a letter grade."},
+    {"title": "Even or odd", "language": "go",
+     "pitch": "Type a list of numbers and it labels each one even or odd."},
+    {"title": "Countdown printer", "language": "rust",
+     "pitch": "Type a number and it counts down to zero, one line per number."},
+    {"title": "Shopping total", "language": "ruby",
+     "pitch": "Type prices, one per line, and get the count and the total."},
+    {"title": "Name tag maker", "language": "bash",
+     "pitch": "Type a name and a role and it prints a small name tag."},
 ]
 
 
@@ -183,23 +231,65 @@ STEP_INSTRUCTIONS = (
 )
 
 
-def _nonblank(code: str) -> list[str]:
-    return [ln.rstrip() for ln in code.splitlines() if ln.strip()]
+def step_instructions(language: str) -> str:
+    """The step prompt's rules. C and Python get the v1.0 text byte-for-byte (rule 2.7); any other language gets the
+    same rules with the closing style line taken from its LangSpec."""
+    if language in LEGACY_LANGUAGES:
+        return STEP_INSTRUCTIONS
+    head = STEP_INSTRUCTIONS.rsplit("\n", 1)[0]
+    return head + "\n- Use the language you are told. " + lang.spec(language).style_note
 
 
-def added_lines(prev: str, new: str) -> int:
-    """Non-blank lines of `new` that are not carried over from `prev` (G5)."""
-    a, b = _nonblank(prev), _nonblank(new)
+def _comment_prefix(language: str | None) -> str | None:
+    """The line-comment prefix to ignore when counting and comparing lines. None for C, Python and 'unknown': their
+    rules are the v1.0 ones (a comment line counts like any other), kept byte-for-byte (contract rule 2.7)."""
+    if language is None or language in LEGACY_LANGUAGES:
+        return None
+    try:
+        return lang.spec(language).comment
+    except lang.UnknownLanguage:
+        return None
+
+
+# Lines every program of a language starts with and that teach nothing: imports, includes, package lines, the shebang.
+# Showing one in an example or a hint is not showing the answer. Only for languages other than C and Python.
+_BOILERPLATE = re.compile(
+    r"^(import\b|package\b|use\b|using\b|extern\s+crate\b|require\b|require_relative\b|#include\b|#!|"
+    r"set\s+-[a-z]+|'use strict'|\"use strict\")|\brequire\(")
+
+
+def _is_boilerplate(line: str, language: str | None) -> bool:
+    if language is None or language in LEGACY_LANGUAGES:
+        return False
+    return _BOILERPLATE.search(line.strip()) is not None
+
+
+def _nonblank(code: str, comment: str | None = None) -> list[str]:
+    return [ln.rstrip() for ln in code.splitlines()
+            if ln.strip() and not (comment and ln.strip().startswith(comment))]
+
+
+def added_lines(prev: str, new: str, language: str | None = None) -> int:
+    """Non-blank lines of `new` that are not carried over from `prev` (G5). For languages other than C and Python a
+    comment-only line is not code and does not count (Rust and Java learners are told to comment their steps)."""
+    cm = _comment_prefix(language)
+    a, b = _nonblank(prev, cm), _nonblank(new, cm)
     sm = difflib.SequenceMatcher(None, a, b, autojunk=False)
     return sum(j2 - j1 for tag, _i1, _i2, j1, j2 in sm.get_opcodes() if tag in ("replace", "insert"))
 
 
-def leaked_lines(prev: str, ref: str) -> list[str]:
-    """Reference lines with 12+ non-space characters that the previous reference did not already have (G7)."""
+def leaked_lines(prev: str, ref: str, language: str | None = None) -> list[str]:
+    """Reference lines with 12+ non-space characters that the previous reference did not already have (G7).
+    For languages other than C and Python, comment-only lines and import-style lines are not answers."""
+    cm = _comment_prefix(language)
     old = {ln.strip() for ln in prev.splitlines()}
     out, seen = [], set()
     for ln in ref.splitlines():
         s = ln.strip()
+        if cm and s.startswith(cm):
+            continue
+        if _is_boilerplate(s, language):
+            continue
         if s and s not in old and s not in seen and len(re.sub(r"\s", "", s)) >= MIN_LEAK_CHARS:
             seen.add(s)
             out.append(s)
@@ -217,9 +307,9 @@ def leaks_answer(text: str, lines: list[str]) -> bool:
     return any(_squash(ln) in t for ln in lines)
 
 
-def drop_leaky_hints(hints: list[str], prev: str, ref: str) -> list[str]:
+def drop_leaky_hints(hints: list[str], prev: str, ref: str, language: str | None = None) -> list[str]:
     """G7: drop any hint that contains a new reference line of 12+ non-space characters, ignoring spacing."""
-    lines = leaked_lines(prev, ref)
+    lines = leaked_lines(prev, ref, language)
     return [h for h in hints if not leaks_answer(h, lines)]
 
 
@@ -246,6 +336,25 @@ def _payload(language: str, prev: str, reply: StepReply) -> CodePayload:
 
 # ---- the gates. Each raises GateFail (or SandboxGone when the sandbox cannot decide); each is testable alone.
 
+def _first_error_line(text: str, language: str) -> str:
+    """The first line of a compiler's message that says something. Go opens with '# command-line-arguments' and
+    Rust/Java may open with a blank or a bare banner; C and Python keep the v1.0 rule (first line, 200 chars)."""
+    lines = text.splitlines() or [""]
+    if language not in LEGACY_LANGUAGES:
+        lines = [ln for ln in lines if ln.strip() and not ln.lstrip().startswith("# ")] or lines
+    return lines[0][:200]
+
+
+def _compiles(language: str) -> bool:
+    """True when the language has a compile step. Python was always worded 'did not compile' here; it stays so."""
+    if language in LEGACY_LANGUAGES:
+        return True
+    try:
+        return lang.spec(language).compiled
+    except lang.UnknownLanguage:
+        return True
+
+
 def gate_reference_passes(payload: CodePayload) -> None:
     """G1: the reference passes every visible and hidden test."""
     res = check_reference(payload)
@@ -254,7 +363,10 @@ def gate_reference_passes(payload: CodePayload) -> None:
     if not res.ok:
         why = f"{res.passed} of {res.total} tests"
         if res.compile_error:
-            why = "it did not compile: " + res.compile_error.splitlines()[0][:200]
+            first = _first_error_line(res.compile_error, payload.language)
+            # a compiled language "did not compile"; an interpreted one has a syntax error (C and Python keep today's words)
+            verb = "it did not compile: " if _compiles(payload.language) else "it has a syntax error: "
+            why = verb + first
         raise GateFail("G1", f"CodeCoach's own solution did not pass its own tests ({why}).")
 
 
@@ -338,9 +450,9 @@ def gate_output_shown(payload: CodePayload, task: str, earlier_shown: list[str])
                              "in the task or show that kind of line in a visible test.")
 
 
-def gate_small_step(prev: str, ref: str) -> None:
+def gate_small_step(prev: str, ref: str, language: str | None = None) -> None:
     """G5: the reference adds at most 40 non-blank lines over the previous reference."""
-    n = added_lines(prev, ref)
+    n = added_lines(prev, ref, language)
     if n > MAX_STEP_LINES:
         raise GateFail("G5", f"The step adds {n} lines of code; a step may add at most {MAX_STEP_LINES}.")
 
@@ -419,13 +531,19 @@ class ProjectEngine:
     def sandbox(self) -> str:
         return sandbox_status()
 
-    def create(self, idea: Any, language: Any) -> str:
+    def create(self, idea: Any, language: Any, starter: Any = None) -> str:
         from codecoach.service import ServiceError
         text = idea.strip() if isinstance(idea, str) else ""
-        if not IDEA_MIN <= len(text) <= IDEA_MAX:
+        if starter is None and text.startswith(STARTER_IDEA):     # the route body folds {"starter": id} into the idea
+            starter = text[len(STARTER_IDEA):].strip()
+        if starter is not None:
+            if not starters.known(starter) or not isinstance(language, str) or starters.part(starter, language) is None:
+                raise ServiceError(422, "bad_starter", "CodeCoach has no ready-made project like that in that language.")
+            text = starters.shared(starter)["pitch"]
+        elif not IDEA_MIN <= len(text) <= IDEA_MAX:
             raise ServiceError(422, "bad_idea", f"Describe your project in {IDEA_MIN} to {IDEA_MAX} characters.")
-        if language not in LANGUAGES:
-            raise ServiceError(422, "bad_language", "Pick C or Python.")
+        if not isinstance(language, str) or language not in lang.ready_ids():
+            raise ServiceError(422, "bad_language", "That language is not set up on this machine yet.")
         if sandbox_status() != "bwrap":
             raise ServiceError(503, "sandbox_unavailable",
                                "Projects run your code in a sandbox. Install bubblewrap (bwrap) to use them.")
@@ -436,8 +554,10 @@ class ProjectEngine:
                 pid = "p_" + secrets.token_hex(3)
             now = iso(self.svc.now())
             state = {"id": pid, "title": text[:60], "language": language, "idea": text, "status": "planning",
-                     "reason": None, "summary": "", "plan": [], "current": 0, "code": STARTERS[language],
+                     "reason": None, "summary": "", "plan": [], "current": 0, "code": starter_for(language),
                      "progress": {}, "created_at": now, "updated_at": now}
+            if starter is not None:
+                state["starter"] = starter
             self.svc.store.set_meta(self._pkey(pid), state)
             self.svc.store.set_meta("projects:index", [pid] + self._index())
             self._planning.add(pid)
@@ -455,8 +575,9 @@ class ProjectEngine:
             rows.append({"id": p["id"], "title": p["title"], "language": p["language"], "status": p["status"],
                          "steps_total": len(p.get("plan") or []),
                          "steps_passed": sum(1 for v in prog.values() if isinstance(v, dict) and v.get("passed")),
-                         "updated_at": p.get("updated_at")})
-        return {"sandbox": sandbox_status(), "ideas": self.ideas(), "projects": rows}
+                         "updated_at": p.get("updated_at"), "starter": p.get("starter")})
+        return {"sandbox": sandbox_status(), "ideas": self.ideas(), "starters": starters.listing(lang.ready_ids()),
+                "projects": rows}
 
     def delete(self, pid: str) -> None:
         self._require(pid)
@@ -487,7 +608,9 @@ class ProjectEngine:
                           "with_help": bool(pr.get("with_help"))})
         return {"id": p["id"], "title": p["title"], "language": p["language"], "idea": p["idea"],
                 "summary": p.get("summary") or "", "status": p["status"], "reason": p.get("reason"),
-                "current": cur, "code": p.get("code") or "", "steps": steps}
+                "current": cur, "code": p.get("code") or "", "steps": steps,
+                "language_name": language_name(p["language"]), "ext": ext_for(p["language"]),
+                "starter": p.get("starter")}
 
     def _step_status(self, pid: str, i: int, cur: int, pr: dict) -> str:
         if pr.get("passed"):
@@ -504,9 +627,14 @@ class ProjectEngine:
 
     # ------------------------------------------------------------ the plan
 
+    @staticmethod
+    def _build_lock(p: dict | None):
+        """The lock a model build takes. A ready-made project makes no model call, so it never waits behind one."""
+        return contextlib.nullcontext() if p and p.get("starter") else _BUILD_LOCK
+
     def _plan_job(self, pid: str) -> None:
         try:
-            with _BUILD_LOCK:
+            with self._build_lock(self.load(pid)):
                 self._plan(pid)
         except Exception:
             self._finish_plan(pid, status="failed", reason="Planning stopped unexpectedly. Try again.")
@@ -526,15 +654,17 @@ class ProjectEngine:
         p = self.load(pid)
         if p is None:
             return
-        if self.svc.llm is None:
+        if p.get("starter"):                    # ready-made: the plan is shipped data, no model call
+            r = PlanReply(**starters.plan(p["starter"]))
+        elif self.svc.llm is None:
             return self._finish_plan(pid, status="failed", reason="No model is connected, so CodeCoach cannot plan a project.")
-        lang = "C" if p["language"] == "c" else "Python"
-        text = f"Language: {lang}\nProject idea: {p['idea']}"
-        try:
-            r = structured_call(self.svc.llm, PlanReply, instructions=PLAN_INSTRUCTIONS, text=text,
-                                purpose=PLAN_PURPOSE, retries=3, timeout=getattr(self.svc.cfg, "llm_timeout_s", None))
-        except (LLMBadOutput, LLMError) as e:
-            return self._finish_plan(pid, status="failed", reason=_plain_llm_reason(e))
+        else:
+            text = f"Language: {language_name(p['language'])}\nProject idea: {p['idea']}"
+            try:
+                r = structured_call(self.svc.llm, PlanReply, instructions=PLAN_INSTRUCTIONS, text=text,
+                                    purpose=PLAN_PURPOSE, retries=3, timeout=getattr(self.svc.cfg, "llm_timeout_s", None))
+            except (LLMBadOutput, LLMError) as e:
+                return self._finish_plan(pid, status="failed", reason=_plain_llm_reason(e))
         if not r.feasible:
             why = r.why_not.strip() or "That idea does not fit a small project that runs from input to output."
             return self._finish_plan(pid, status="refused", reason=why)
@@ -558,7 +688,7 @@ class ProjectEngine:
     def _base_code(self, p: dict, i: int) -> str | None:
         """CodeCoach's previous reference solution (the starter for step 0). None when step i-1 is not built."""
         if i == 0:
-            return STARTERS[p["language"]]
+            return starter_for(p["language"])
         rec = self.step_record(p["id"], i - 1)
         if rec and rec.get("status") == "ready" and isinstance(rec.get("reference_solution"), str):
             return rec["reference_solution"]
@@ -573,7 +703,9 @@ class ProjectEngine:
         Never blocks on the model. Returns the state of step i right now: building | ready | unavailable | none
         (none = nothing to do: sandbox missing, no model, plan not ready, or the index is outside the plan)."""
         p = self.load(pid)
-        if p is None or p.get("status") not in ("ready", "done") or sandbox_status() != "bwrap" or self.svc.llm is None:
+        if p is None or p.get("status") not in ("ready", "done") or sandbox_status() != "bwrap":
+            return "none"
+        if self.svc.llm is None and not p.get("starter"):       # a ready-made project needs no model
             return "none"
         n = len(p.get("plan") or [])
         if isinstance(i, bool) or not isinstance(i, int) or not 0 <= i < n:
@@ -639,11 +771,13 @@ class ProjectEngine:
                     if rec.get("status") == "unavailable":
                         return                  # a broken step stops the chain; its retry rebuilds it
                     continue
-                with _BUILD_LOCK:
+                with self._build_lock(p):
                     rec = self._build_step(p, j)
                 self._store_step(pid, j, rec)
                 with self._lock:
                     self._building.discard((pid, j))       # this step is settled; later ones may still build
+                if not p.get("starter"):                   # the model wrote this step: the service may measure it once
+                    getattr(self.svc, "language_used", lambda _l: None)(p["language"])
                 if rec["status"] != "ready":
                     return
         except Exception:
@@ -668,7 +802,7 @@ class ProjectEngine:
         plan = "\n".join(f"{n + 1}. {s['title']} - {s['goal']} (new idea: {s['concept']})"
                          for n, s in enumerate(p["plan"]))
         s = p["plan"][i]
-        rows = [f"Language: {'C' if p['language'] == 'c' else 'Python'}", f"Project idea: {p['idea']}",
+        rows = [f"Language: {language_name(p['language'])}", f"Project idea: {p['idea']}",
                 f"Plan:\n{plan}", f"Write step {i + 1} of {len(p['plan'])}: {s['title']}",
                 f"Goal: {s['goal']}", f"New idea: {s['concept']}",
                 "Previous reference solution (the program before this step"
@@ -679,15 +813,17 @@ class ProjectEngine:
 
     def _build_step(self, p: dict, i: int) -> dict:
         """One built step record, `ready` or `unavailable`. Holds no lock; the caller holds _BUILD_LOCK."""
-        if self.svc.llm is None:
+        if self.svc.llm is None and not p.get("starter"):
             return self._unavailable(i, "No model is connected, so CodeCoach cannot build this step.", 0)
         prev = self._base_code(p, i)
         if prev is None:
             return self._unavailable(i, "The step before this one is not built yet.", 0)
+        if p.get("starter"):
+            return self._build_starter_step(p, i, prev)
         feedback, reason = "", "The step could not be built."
         for attempt in range(1, MAX_RETRIES + 2):
             try:
-                reply = structured_call(self.svc.llm, StepReply, instructions=STEP_INSTRUCTIONS,
+                reply = structured_call(self.svc.llm, StepReply, instructions=step_instructions(p["language"]),
                                         text=self.step_prompt(p, i, prev, feedback), purpose=STEP_PURPOSE, retries=2,
                                         timeout=getattr(self.svc.cfg, "llm_timeout_s", None))
             except LLMUnavailable as e:
@@ -709,23 +845,37 @@ class ProjectEngine:
             # a repaired example that still failed is not a retry: _gate returns the record with example null
         return self._unavailable(i, reason, MAX_RETRIES + 1)
 
+    def _build_starter_step(self, p: dict, i: int, prev: str) -> dict:
+        """A ready-made step: the reply is shipped data, and it goes through the same gates. One attempt, no retry
+        (the data does not change between tries) and no model call, not even to repair the example."""
+        try:
+            reply = StepReply(**starters.step_reply(p["starter"], p["language"], i))
+        except (KeyError, IndexError, TypeError, ValidationError):
+            return self._unavailable(i, "This ready-made step is damaged. Reinstall CodeCoach.", 1)
+        try:
+            return self._gate(p, i, prev, reply, 1)
+        except GateFail as g:
+            return self._unavailable(i, g.reason, 1)
+        except SandboxGone:
+            return self._unavailable(i, "The code sandbox stopped working. Install or fix bubblewrap, then retry.", 1)
+
     def _gate(self, p: dict, i: int, prev: str, reply: StepReply, attempt: int) -> dict:
-        lang = p["language"]
+        lang_id = p["language"]
         if not reply.visible_tests:
             raise GateFail("G4", "The step needs at least one visible and one hidden test.")
         try:
-            payload = _payload(lang, prev, reply)
+            payload = _payload(lang_id, prev, reply)
         except ValidationError:
             raise GateFail("G4", "A test was malformed (it needs a name and an expected output).") from None
         gate_reference_passes(payload)                                  # G1
         gate_tests_something_new(payload, prev)                         # G2
         gate_deterministic(payload)                                     # G3
         gate_test_shape(payload)                                        # G4
-        gate_small_step(prev, reply.reference_solution)                 # G5
+        gate_small_step(prev, reply.reference_solution, lang_id)        # G5
         gate_output_shown(payload, reply.task, self._shown_before(p, i))  # G8
-        answer = leaked_lines(prev, reply.reference_solution)
+        answer = leaked_lines(prev, reply.reference_solution, lang_id)
         example = self._example(p, i, reply, prev, answer)              # G6 (+ G7: an example is not the answer)
-        hints = drop_leaky_hints([h.strip() for h in reply.hints], prev, reply.reference_solution)    # G7
+        hints = drop_leaky_hints([h.strip() for h in reply.hints], prev, reply.reference_solution, lang_id)    # G7
         lesson = [s.strip() for s in reply.lesson if not leaks_answer(s, answer)]                   # G7
         return {"version": PROJECT_PROMPT_VERSION, "index": i, "status": "ready", "reason": None,
                 "attempts": attempt, "lesson": lesson, "example": example,
@@ -737,16 +887,18 @@ class ProjectEngine:
     def _example(self, p: dict, i: int, reply: StepReply, prev: str, answer: list[str] | None = None) -> dict | None:
         """G6 plus the answer rule: an example that carries a line of this step's solution would hand the learner the
         answer (orchestrator probe, Nov 8: an example equal to the reference passed). One repair, then no example."""
-        lang = p["language"]
+        lang_id = p["language"]
         answer = answer or []
-        got = real_example(lang, reply.example)
+        got = real_example(lang_id, reply.example)
         if got is not None and not leaks_answer(got["code"], answer):
             return got
+        if p.get("starter"):                    # shipped data: nothing to repair with, and never a model call
+            return None
         s = p["plan"][i]
         problem = ("gives away the answer: it contains lines of the program the learner must write. Show the idea in a "
                    "DIFFERENT small program (other names, other values)") if got is not None else (
                   "did not run (it failed to compile or exited with an error)")
-        text = (f"Language: {'C' if lang == 'c' else 'Python'}\nThe example program below {problem}. Write a small "
+        text = (f"Language: {language_name(lang_id)}\nThe example program below {problem}. Write a small "
                 f"COMPLETE program that shows: {s['concept']}. "
                 f"Reply with JSON {{\"code\": \"...\", \"stdin\": \"\"}}.\n\nExample to replace:\n{reply.example.code}")
         try:
@@ -756,7 +908,7 @@ class ProjectEngine:
                                     timeout=getattr(self.svc.cfg, "llm_timeout_s", None))
         except (LLMBadOutput, LLMError):
             return None
-        got = real_example(lang, fixed)
+        got = real_example(lang_id, fixed)
         return got if got is not None and not leaks_answer(got["code"], answer) else None
 
     # ------------------------------------------------------------ the check flow
@@ -849,7 +1001,7 @@ class ProjectEngine:
             hidden_count=len(rec.get("hidden_tests") or []),
             hints_shown=hints[:used], hints_left=len(hints) - used,
             can_show_solution=self._can_show_solution(prog, len(hints)),
-            starting_code=p.get("code") or STARTERS[p["language"]])
+            starting_code=p.get("code") or starter_for(p["language"]))
         return out
 
     @staticmethod
@@ -860,7 +1012,7 @@ class ProjectEngine:
     def _payload_of(p: dict, rec: dict) -> CodePayload:
         tests = lambda rows: [CodeTest(name=t["name"], stdin=t["stdin"], expected_stdout=t["expected_stdout"])  # noqa: E731
                               for t in rows]
-        return CodePayload(language=p["language"], starter=STARTERS[p["language"]], visible_tests=tests(rec["visible_tests"]),
+        return CodePayload(language=p["language"], starter=starter_for(p["language"]), visible_tests=tests(rec["visible_tests"]),
                            hidden_tests=tests(rec["hidden_tests"]), reference_solution=rec["reference_solution"])
 
     def _run_out(self, pid: str, i: int, res: Any, *, hidden: bool) -> dict:
@@ -946,9 +1098,21 @@ class ProjectEngine:
 
 # ------------------------------------------------------------------ request bodies (routes)
 
-class ProjectCreateRequest(BaseModel):          # POST /projects
+STARTER_IDEA = "starter:"       # how the route body hands a ready-made project to create(idea, language)
+
+
+class ProjectCreateRequest(BaseModel):          # POST /projects: {"idea", "language"} or {"starter", "language"}
     idea: str = ""
     language: str = ""
+    starter: str = ""
+
+    @model_validator(mode="after")
+    def _fold_starter(self) -> "ProjectCreateRequest":
+        # the route calls project_create(body.idea, body.language); a starter travels in the idea slot until the
+        # orchestrator passes body.starter through (create() takes it as a third argument)
+        if self.starter.strip():
+            self.idea = STARTER_IDEA + self.starter.strip()
+        return self
 
 
 class ProjectCodeRequest(BaseModel):            # POST /projects/{pid}/steps/{i}/run and /check
